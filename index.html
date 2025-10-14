@@ -78,6 +78,9 @@
             <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
                 <input type="date" id="dateSelector" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-700 font-semibold transition duration-150">
 
+                <input type="text" id="filterInput" placeholder="Filtrar por Atividade ou Responsável..." 
+                       class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-700 font-semibold transition duration-150">
+
                 <button id="exportButton" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-150 disabled:bg-gray-400">
                     Exportar Status (CSV)
                 </button>
@@ -142,12 +145,15 @@
 
         const currentDateDisplay = document.getElementById('currentDateDisplay');
         const dateSelector = document.getElementById('dateSelector');
+        const filterInput = document.getElementById('filterInput');
         const todayTasksContainer = document.getElementById('todayTasksContainer');
         const allTasksBody = document.getElementById('allTasksBody');
         const loadingMessage = document.getElementById('loadingMessage');
         const noTasksMessage = document.getElementById('noTasksMessage');
         const exportButton = document.getElementById('exportButton');
         const resetButton = document.getElementById('resetButton');
+
+        let filterText = ''; // Nova variável para armazenar o texto de filtro
 
         // Dados consolidados da planilha dado.xlsx - Planilha1.csv
         const rawChecklistData = [
@@ -349,9 +355,19 @@
                 const isScheduledForDay = task[dayOfWeekKey] === 'x';
                 const hasSpecificTime = task.horario && task.horario !== '-';
                 
-                // Filtra apenas tarefas Diárias/Semanais que têm horário definido no dia.
-                // Tarefas Quinzenais/Mensais sem horário de relógio definido ficam apenas na tabela completa.
-                return isScheduledForDay && hasSpecificTime;
+                // 1. Filtra apenas tarefas Diárias/Semanais agendadas para o dia
+                if (!(isScheduledForDay && hasSpecificTime)) {
+                    return false;
+                }
+
+                // 2. Aplica o filtro de texto
+                if (filterText) {
+                    const activityMatch = task.atividade.toLowerCase().includes(filterText);
+                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText);
+                    return activityMatch || responsibleMatch;
+                }
+
+                return true;
             });
 
             tasks.sort((a, b) => {
@@ -601,7 +617,18 @@
          */
         function renderAllTasks() {
             allTasksBody.innerHTML = '';
-            rawChecklistData.forEach(task => {
+
+            // 1. Aplica o filtro de texto a TODAS as tarefas
+            const filteredTasks = rawChecklistData.filter(task => {
+                if (filterText) {
+                    const activityMatch = task.atividade.toLowerCase().includes(filterText);
+                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText);
+                    return activityMatch || responsibleMatch;
+                }
+                return true;
+            });
+            
+            filteredTasks.forEach(task => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50';
                 
@@ -726,12 +753,19 @@
                 selectedDate = newDate;
                 renderTodayTasks();
             });
+
+            // 4. Adiciona listener para o campo de filtro
+            filterInput.addEventListener('input', (e) => {
+                filterText = e.target.value.toLowerCase().trim();
+                renderAllTasks();
+                renderTodayTasks();
+            });
             
-            // 4. Inicia a renderização para a data padrão (D-1)
+            // 5. Inicia a renderização para a data padrão (D-1)
             renderAllTasks();
             renderTodayTasks();
             
-            // 5. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
+            // 6. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
             setInterval(renderTodayTasks, 60000); 
             
             exportButton.addEventListener('click', exportToCSV);
