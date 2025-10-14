@@ -47,16 +47,26 @@
             overflow-x: auto;
         }
         .editable {
-            cursor: pointer;
-            border-bottom: 1px dashed #9ca3af;
+            cursor: default; /* Remove o cursor pointer no span */
         }
-        .delete-btn {
+        .edit-btn, .delete-btn {
             padding: 4px;
             border-radius: 9999px;
             transition: background-color 0.2s;
         }
         .delete-btn:hover {
             background-color: #fee2e2; /* Red-100 */
+        }
+        .edit-btn:hover {
+            background-color: #e0f2fe; /* Blue-100 */
+        }
+        /* Estilos do Modal de Confirmação */
+        #confirmModalContent {
+            transition: all 0.3s ease-out;
+        }
+        #confirmModal.hidden #confirmModalContent {
+            opacity: 0;
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -124,7 +134,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.993 3.993 0 0015 11h-1a3.993 3.993 0 00-3.25 1.094A5.972 5.972 0 007 15v3h9z" />
                     </svg>
-                    Checklist Completo
+                    Checklist Completo (Gestão de Itens)
                 </span>
                 <button id="addTaskButton" class="px-4 py-1.5 text-sm bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -135,7 +145,7 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade (Clique para Renomear)</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade</th>
                             <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periodicidade</th>
                             <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário/Prazo</th>
                             <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsável</th>
@@ -250,9 +260,8 @@
         let statusFilter = 'ALL'; // Variável para armazenar o filtro de status
         let rawChecklistData = []; // Dados mestres carregados
 
-        // Dados consolidados da planilha dado.xlsx - Planilha1.csv (Usado apenas como fallback inicial)
+        // Dados RESTAURADOS DA PLANILHA dado.xlsx - Planilha1.csv
         const defaultRawChecklistData = [
-            // ATIVIDADES GESTÃO DE DADOS (70 atividades)
             { atividade: "Bom Dia Assim Saúde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Paulo Lima" },
             { atividade: "Relatório de Gestão de Ocorrências Assim Saúde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Backlog GECRE - Envio 08:30h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Paulo Lima" },
@@ -806,7 +815,8 @@
                 csvContent += row + '\n';
             });
 
-            const blob = new Blob(["\uFEUFF", csvContent], { type: 'text/csv;charset=utf-8;' });
+            // Uso do BOM correto (\uFEFF)
+            const blob = new Blob(["\uFEFF", csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
@@ -961,8 +971,15 @@
                     <td class="px-3 py-3 whitespace-nowrap">${statusBadge}</td>
                     <td class="px-3 py-3 text-sm font-semibold text-gray-700">${horarioDisplay}</td>
                     <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${task.responsavel || '-'}</td>
-                    <td class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
-                        <button data-pk-id="${task.pkId}" class="delete-btn text-red-600 hover:text-red-900">
+                    <td class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium flex justify-end space-x-2">
+                        <!-- Botão de Edição (Renomear) -->
+                        <button data-pk-id="${task.pkId}" class="edit-btn text-blue-600 hover:text-blue-900" title="Renomear Atividade">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        <!-- Botão de Excluir -->
+                        <button data-pk-id="${task.pkId}" class="delete-btn text-red-600 hover:text-red-900" title="Excluir Atividade">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -973,8 +990,14 @@
             });
             
             // Adiciona listeners para edição da Atividade
-            document.querySelectorAll('.editable').forEach(span => {
-                span.addEventListener('click', (e) => startRename(e.target));
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const pkId = e.currentTarget.dataset.pkId;
+                    const spanElement = document.getElementById(`atividade-${pkId}`);
+                    if (spanElement) {
+                        startRename(spanElement);
+                    }
+                });
             });
 
             // Adiciona listeners para exclusão da Atividade
@@ -1023,29 +1046,28 @@
 
                         // Renomeia
                         rawChecklistData[taskIndex].atividade = newActivity;
+                        // O saveChecklistData() chama renderAllTasks() e renderTodayTasks()
                         saveChecklistData();
                         
                         // NOTA DE AVISO: Renomear limpa o status de conclusão
                         if (completionStatus[oldTaskId]) {
+                            // Limpa status para a nova atividade (ID mudou)
                             delete completionStatus[oldTaskId];
                             showModal('Sucesso e Aviso', 'Tarefa renomeada com sucesso! Um aviso: o status de verificação anterior para esta tarefa foi removido, pois a identificação do item (Task ID) foi alterada.');
                         } else {
                             showModal('Sucesso', 'Tarefa renomeada com sucesso.');
                         }
                         
-                        // Salva e renderiza novamente a lista
-                        saveChecklistData();
-                        renderAllTasks();
                     }
                 } else {
-                    // Se o texto for vazio ou igual ao original, apenas retorna o span
+                    // Se o texto for vazio ou igual ao original, apenas retorna o span original
                     input.replaceWith(spanElement);
                 }
                 
-                // Limpa listeners para evitar duplicação
+                // Limpa listeners para evitar duplicação e garante o re-render
                 input.removeEventListener('blur', saveRename);
                 input.removeEventListener('keypress', handleKey);
-                renderAllTasks();
+                renderAllTasks(); // Garante que o item editado volte a ser um span
             };
 
             const handleKey = (e) => {
@@ -1113,4 +1135,78 @@
         // --- Inicialização e Loop de Atualização ---
         
         function initializeApp() {
-            // 0. Carrega dados mestres (permite persistência de adição/renome
+            // 0. Carrega dados mestres (permite persistência de adição/renomeação)
+            loadAndInitializeData();
+
+            // 1. Calcula a data D-1 corretamente. Define a hora para meia-noite (00:00:00) para garantir consistência.
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Zera o tempo de 'hoje'
+            
+            const defaultDate = new Date(today);
+            defaultDate.setDate(today.getDate() - 1); // Subtrai 1 dia
+
+            // 2. Seta o valor do input (YYYY-MM-DD) e a variável de estado
+            const defaultDateISO = dateToISO(defaultDate);
+            dateSelector.value = defaultDateISO;
+            selectedDate = defaultDate;
+
+            // 3. Adiciona listeners de UI
+            dateSelector.addEventListener('change', (e) => {
+                const newDate = new Date(e.target.value + 'T00:00:00'); 
+                selectedDate = newDate;
+                renderTodayTasks();
+            });
+
+            filterInput.addEventListener('input', (e) => {
+                filterText = e.target.value.toLowerCase().trim();
+                renderAllTasks(); 
+                renderTodayTasks(); 
+            });
+            
+            statusFilterInput.addEventListener('change', (e) => {
+                statusFilter = e.target.value;
+                renderTodayTasks(); 
+            });
+            
+            addTaskButton.addEventListener('click', openAddTaskModal);
+            addTaskForm.addEventListener('submit', handleAddTask);
+
+            // 4. Inicia a renderização para a data padrão (D-1)
+            renderAllTasks();
+            renderTodayTasks();
+            
+            // 5. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
+            setInterval(renderTodayTasks, 60000); 
+            
+            exportButton.addEventListener('click', exportToCSV);
+            
+            // Lógica para o botão de resetar
+             resetButton.addEventListener('click', () => {
+                const todayAtMidnight = new Date();
+                todayAtMidnight.setHours(0, 0, 0, 0);
+
+                const yesterdayAtMidnight = new Date(todayAtMidnight);
+                yesterdayAtMidnight.setDate(todayAtMidnight.getDate() - 1);
+                
+                const isSelectedDateToday = dateToISO(selectedDate) === dateToISO(todayAtMidnight);
+                const isSelectedDateYesterday = dateToISO(selectedDate) === dateToISO(yesterdayAtMidnight);
+                const isEditableDate = isSelectedDateToday || isSelectedDateYesterday;
+
+
+                if (isEditableDate) {
+                    showConfirmModal(
+                        'Confirmar Reinício',
+                        `ATENÇÃO: Você deseja apagar TODOS os status de conclusão e observações salvos para ${selectedDate.toLocaleDateString('pt-BR')}? Essa ação não pode ser desfeita.`,
+                        clearCompletionStatus
+                    );
+                } else {
+                    showModal('Atenção', 'O botão Reiniciar Status da Data só está habilitado para o dia atual ou para o dia anterior (D-1), que é o período de auditoria.');
+                }
+            });
+        }
+
+        window.onload = initializeApp;
+
+    </script>
+</body>
+</html>
