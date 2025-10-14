@@ -78,6 +78,13 @@
             <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
                 <input type="date" id="dateSelector" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-700 font-semibold transition duration-150">
 
+                <select id="statusFilterInput" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-700 font-semibold transition duration-150">
+                    <option value="ALL">Todos os Status</option>
+                    <option value="PENDING">Aguardando Verificação</option>
+                    <option value="DONE">Verificado (Concluído)</option>
+                    <option value="MISSED">Não Enviado</option>
+                </select>
+
                 <input type="text" id="filterInput" placeholder="Filtrar por Atividade ou Responsável..." 
                        class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-700 font-semibold transition duration-150">
 
@@ -146,6 +153,7 @@
         const currentDateDisplay = document.getElementById('currentDateDisplay');
         const dateSelector = document.getElementById('dateSelector');
         const filterInput = document.getElementById('filterInput');
+        const statusFilterInput = document.getElementById('statusFilterInput'); // Novo elemento de filtro de status
         const todayTasksContainer = document.getElementById('todayTasksContainer');
         const allTasksBody = document.getElementById('allTasksBody');
         const loadingMessage = document.getElementById('loadingMessage');
@@ -153,7 +161,8 @@
         const exportButton = document.getElementById('exportButton');
         const resetButton = document.getElementById('resetButton');
 
-        let filterText = ''; // Nova variável para armazenar o texto de filtro
+        let filterText = ''; // Variável para armazenar o texto de filtro
+        let statusFilter = 'ALL'; // Variável para armazenar o filtro de status
 
         // Dados consolidados da planilha dado.xlsx - Planilha1.csv
         const rawChecklistData = [
@@ -348,7 +357,7 @@
             
             if (!dayOfWeekKey) return [];
 
-            const tasks = rawChecklistData.map(task => ({
+            let tasks = rawChecklistData.map(task => ({
                 ...task,
                 id: getTaskId(task)
             })).filter(task => {
@@ -360,24 +369,38 @@
                     return false;
                 }
 
-                // 2. Aplica o filtro de texto
+                return true;
+            });
+            
+            loadCompletionStatus(); // Garante que o status atual foi carregado
+
+            // 2. Aplica o filtro de status (Status Filter)
+            const filteredByStatusTasks = tasks.filter(task => {
+                const taskStatus = completionStatus[task.id] ? completionStatus[task.id].status : STATUS_PENDING;
+                
+                if (statusFilter === 'ALL') return true;
+                return taskStatus === statusFilter;
+            });
+
+            // 3. Aplica o filtro de texto (Text Filter)
+            const filteredTasks = filteredByStatusTasks.filter(task => {
                 if (filterText) {
                     const activityMatch = task.atividade.toLowerCase().includes(filterText);
                     const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText);
                     return activityMatch || responsibleMatch;
                 }
-
                 return true;
             });
 
-            tasks.sort((a, b) => {
+
+            filteredTasks.sort((a, b) => {
                 if (a.horario < b.horario) return -1;
                 if (a.horario > b.horario) return 1;
                 return 0;
             });
             
-            todayTasksCache = tasks;
-            return tasks;
+            todayTasksCache = filteredTasks;
+            return filteredTasks;
         }
 
         /**
@@ -684,8 +707,21 @@
             
             let csvContent = `Atividade;Periodicidade;Horário/Prazo de Envio;Responsável;Status Final;Hora da Verificação (Data do Registro: ${dateStrPtBr});Comprovação/Motivo\n`;
 
-            todayTasksCache.forEach(task => {
-                const taskStatus = completionStatus[task.id] || { status: STATUS_PENDING, observation: '' };
+            // Garante que o cache contenha TODAS as tarefas do dia, sem o filtro de texto/status
+            const allDayTasks = rawChecklistData.map(task => ({
+                ...task,
+                id: getTaskId(task)
+            })).filter(task => {
+                const dayOfWeekKey = getDayKey(selectedDate);
+                const isScheduledForDay = task[dayOfWeekKey] === 'x';
+                const hasSpecificTime = task.horario && task.horario !== '-';
+                return isScheduledForDay && hasSpecificTime;
+            });
+
+
+            allDayTasks.forEach(task => {
+                // Recarrega o status para garantir que está atualizado
+                const taskStatus = completionStatus[task.id] || { status: STATUS_PENDING, observation: '' }; 
                 const deadlineStr = task.horario && (task.status === 'Diário' || task.status === 'Semanal') ? task.horario.substring(0, 5) : task.horario;
                 
                 let completionTime = '';
@@ -754,18 +790,24 @@
                 renderTodayTasks();
             });
 
-            // 4. Adiciona listener para o campo de filtro
+            // 4. Adiciona listener para o campo de filtro de texto
             filterInput.addEventListener('input', (e) => {
                 filterText = e.target.value.toLowerCase().trim();
-                renderAllTasks();
-                renderTodayTasks();
+                renderAllTasks(); // Aplica o filtro na tabela completa
+                renderTodayTasks(); // Aplica o filtro na lista de auditoria
             });
             
-            // 5. Inicia a renderização para a data padrão (D-1)
+            // 5. Adiciona listener para o campo de filtro de status
+            statusFilterInput.addEventListener('change', (e) => {
+                statusFilter = e.target.value;
+                renderTodayTasks(); // Aplica o filtro de status na lista de auditoria
+            });
+
+            // 6. Inicia a renderização para a data padrão (D-1)
             renderAllTasks();
             renderTodayTasks();
             
-            // 6. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
+            // 7. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
             setInterval(renderTodayTasks, 60000); 
             
             exportButton.addEventListener('click', exportToCSV);
