@@ -62,8 +62,8 @@
         
         <!-- Aviso de Comprovação -->
         <div class="p-4 mb-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg" role="alert">
-            <p class="font-bold">Modo de Verificação (D-1)</p>
-            <p class="text-sm">Selecione a data que você deseja verificar o status. O status e as observações são salvos **localmente** para cada dia.</p>
+            <p class="font-bold">Modo de Verificação (Dia Atual e D-1)</p>
+            <p class="text-sm">Selecione a data que você deseja verificar o status. A edição (salvamento) é permitida para o dia **atual** e para o **dia anterior (D-1)**.</p>
         </div>
 
         <!-- Seção de Seleção de Data e Ações -->
@@ -316,17 +316,23 @@
          * Salva o status de conclusão no LocalStorage para a data selecionada.
          */
         function saveCompletionStatus(taskId, status, deadline, observationText = '') {
-            // Verifica se a data selecionada é o dia anterior antes de salvar
-            const yesterday = new Date();
-            yesterday.setHours(0, 0, 0, 0); // Zera o tempo
-            yesterday.setDate(yesterday.getDate() - 1); // Calcula D-1
+            // Lógica para Habilitar Edição (Dia Atual OU Dia Anterior)
+            const todayAtMidnight = new Date();
+            todayAtMidnight.setHours(0, 0, 0, 0);
+
+            const yesterdayAtMidnight = new Date(todayAtMidnight);
+            yesterdayAtMidnight.setDate(todayAtMidnight.getDate() - 1); // Calcula D-1
             
             // Cria a data de verificação zerada para comparação
             const verificationDate = new Date(selectedDate);
             verificationDate.setHours(0, 0, 0, 0);
 
-            if (dateToISO(verificationDate) !== dateToISO(yesterday)) {
-                showModal('Erro', 'Você só pode salvar verificações para o dia anterior (D-1).');
+            const isEditableDate = dateToISO(verificationDate) === dateToISO(todayAtMidnight) || 
+                                   dateToISO(verificationDate) === dateToISO(yesterdayAtMidnight);
+
+
+            if (!isEditableDate) {
+                showModal('Erro', 'Você só pode salvar verificações para o dia atual ou para o dia anterior (D-1).');
                 return;
             }
 
@@ -411,13 +417,18 @@
             const tasks = getTodayTasks();
             const dayOfWeekKey = getDayKey(selectedDate);
             
-            // Lógica para Habilitar Edição APENAS no dia anterior (D-1)
-            const yesterday = new Date();
-            yesterday.setHours(0, 0, 0, 0); // Zera o tempo de hoje
-            yesterday.setDate(yesterday.getDate() - 1); // Calcula D-1
+            // Lógica para Habilitar Edição (Dia Atual OU Dia Anterior)
+            const todayAtMidnight = new Date();
+            todayAtMidnight.setHours(0, 0, 0, 0);
+            
+            const yesterdayAtMidnight = new Date(todayAtMidnight);
+            yesterdayAtMidnight.setDate(todayAtMidnight.getDate() - 1); // Calcula D-1
 
-            const isSelectedDateYesterday = dateToISO(selectedDate) === dateToISO(yesterday);
-            const isDisabled = !isSelectedDateYesterday; // Só é editável se for D-1
+            const isSelectedDateToday = dateToISO(selectedDate) === dateToISO(todayAtMidnight);
+            const isSelectedDateYesterday = dateToISO(selectedDate) === dateToISO(yesterdayAtMidnight);
+            
+            const isEditableDate = isSelectedDateToday || isSelectedDateYesterday;
+            const isDisabled = !isEditableDate; // Só é editável se for D-1 OU Hoje
 
             loadingMessage.classList.add('hidden');
             todayTasksContainer.innerHTML = '';
@@ -433,7 +444,7 @@
             
             // Exibe a hora atual se a data for hoje
             const now = new Date();
-            const dateDisplaySuffix = dateToISO(selectedDate) === dateToISO(now) 
+            const dateDisplaySuffix = isSelectedDateToday 
                 ? ` - ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` 
                 : '';
             currentDateDisplay.textContent = dateStr + dateDisplaySuffix;
@@ -441,7 +452,7 @@
 
             if (tasks.length === 0) {
                 noTasksMessage.classList.remove('hidden');
-                resetButton.disabled = !isSelectedDateYesterday;
+                resetButton.disabled = !isEditableDate;
                 return;
             } else {
                 noTasksMessage.classList.add('hidden');
@@ -512,14 +523,14 @@
                         <p class="text-sm text-gray-800 break-words max-w-full">${currentObservation || 'Nenhuma registrada.'}</p>
                     `;
                 } else {
-                    // Input de observação para edição (só habilitado no D-1)
+                    // Input de observação para edição (só habilitado no D-1 ou Hoje)
                     actionAreaHTML = `<input type="text" id="observation-input-${task.id}" value="${currentObservation}" placeholder="Assunto/ID ou Motivo da Falha (Obrigatório se Não Enviado)" class="observation-input mb-2 p-2 text-sm border border-gray-300 rounded-lg w-full focus:ring-blue-500 focus:border-blue-500" ${disabledAttr}>`;
                 }
 
                 // Botões de Ação
                 let actionButtonsHTML = '';
                 if (isFinalStatus) {
-                    // Botão para resetar o status (só habilitado no D-1)
+                    // Botão para resetar o status (só habilitado no D-1 ou Hoje)
                     actionButtonsHTML = `
                         <button data-task-id="${task.id}" data-action="${STATUS_PENDING}" ${isDisabled ? 'disabled' : ''}
                                 class="action-btn w-full lg:w-auto px-4 py-2 text-sm font-semibold rounded-full transition duration-150 ${isDisabled ? 'bg-gray-400' : 'bg-gray-400 hover:bg-gray-500'} text-white shadow-lg">
@@ -527,7 +538,7 @@
                         </button>
                     `;
                 } else {
-                    // Botões para marcar como CONCLUÍDO ou NÃO ENVIADO (só habilitado no D-1)
+                    // Botões para marcar como CONCLUÍDO ou NÃO ENVIADO (só habilitado no D-1 ou Hoje)
                     const doneClasses = isDisabled ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600';
                     const missedClasses = isDisabled ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600';
 
@@ -600,8 +611,8 @@
                 });
             });
             
-            // Habilita/desabilita o botão de reset e as ações se for D-1
-            if (isSelectedDateYesterday) {
+            // Habilita/desabilita o botão de reset e as ações se for D-1 ou Hoje
+            if (isEditableDate) {
                 resetButton.disabled = false;
             } else {
                 resetButton.disabled = true;
@@ -814,18 +825,23 @@
             
             // Lógica para o botão de resetar
              resetButton.addEventListener('click', () => {
-                const yesterday = new Date();
-                yesterday.setHours(0, 0, 0, 0);
-                yesterday.setDate(yesterday.getDate() - 1);
-                
-                const isSelectedDateYesterday = dateToISO(selectedDate) === dateToISO(yesterday);
+                const todayAtMidnight = new Date();
+                todayAtMidnight.setHours(0, 0, 0, 0);
 
-                if (isSelectedDateYesterday) {
-                    if (confirm(`ATENÇÃO: Você deseja apagar TODOS os status de conclusão e observações salvos para a data de ontem (${selectedDate.toLocaleDateString('pt-BR')})? Essa ação não pode ser desfeita.`)) {
+                const yesterdayAtMidnight = new Date(todayAtMidnight);
+                yesterdayAtMidnight.setDate(todayAtMidnight.getDate() - 1);
+                
+                const isSelectedDateToday = dateToISO(selectedDate) === dateToISO(todayAtMidnight);
+                const isSelectedDateYesterday = dateToISO(selectedDate) === dateToISO(yesterdayAtMidnight);
+                const isEditableDate = isSelectedDateToday || isSelectedDateYesterday;
+
+
+                if (isEditableDate) {
+                    if (confirm(`ATENÇÃO: Você deseja apagar TODOS os status de conclusão e observações salvos para ${selectedDate.toLocaleDateString('pt-BR')}? Essa ação não pode ser desfeita.`)) {
                         clearCompletionStatus();
                     }
                 } else {
-                    showModal('Atenção', 'O botão Reiniciar Status da Data só está habilitado para o dia anterior (D-1), que é o período de auditoria.');
+                    showModal('Atenção', 'O botão Reiniciar Status da Data só está habilitado para o dia atual ou para o dia anterior (D-1), que é o período de auditoria.');
                 }
             });
         }
