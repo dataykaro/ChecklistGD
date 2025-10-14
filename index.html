@@ -46,6 +46,10 @@
         .responsive-table {
             overflow-x: auto;
         }
+        .editable {
+            cursor: pointer;
+            border-bottom: 1px dashed #9ca3af;
+        }
     </style>
 </head>
 <body>
@@ -107,17 +111,23 @@
 
         <!-- Seção de Todas as Demandas (Checklist Completo) -->
         <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.993 3.993 0 0015 11h-1a3.993 3.993 0 00-3.25 1.094A5.972 5.972 0 007 15v3h9z" />
-                </svg>
-                Checklist Completo
+            <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center justify-between">
+                <span class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.993 3.993 0 0015 11h-1a3.993 3.993 0 00-3.25 1.094A5.972 5.972 0 007 15v3h9z" />
+                    </svg>
+                    Checklist Completo
+                </span>
+                <button id="addTaskButton" class="px-4 py-1.5 text-sm bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                    Adicionar Nova Tarefa
+                </button>
             </h2>
             <div class="responsive-table">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade (Clique para Renomear)</th>
                             <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periodicidade</th>
                             <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário/Prazo</th>
                             <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsável</th>
@@ -131,6 +141,55 @@
         </div>
     </div>
 
+    <!-- Modal de Adição de Nova Tarefa -->
+    <div id="addTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Adicionar Nova Tarefa</h3>
+            <form id="addTaskForm" class="space-y-4">
+                <div>
+                    <label for="newActivity" class="block text-sm font-medium text-gray-700">Atividade</label>
+                    <input type="text" id="newActivity" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div>
+                    <label for="newStatus" class="block text-sm font-medium text-gray-700">Periodicidade</label>
+                    <select id="newStatus" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        <option value="Diário">Diário</option>
+                        <option value="Semanal">Semanal</option>
+                        <option value="Quinzenal">Quinzenal</option>
+                        <option value="Mensal">Mensal</option>
+                        <option value="Por Demanda">Por Demanda</option>
+                        <option value="Suspenso">Suspenso</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="newResponsavel" class="block text-sm font-medium text-gray-700">Responsável</label>
+                    <input type="text" id="newResponsavel" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div>
+                    <label for="newHorario" class="block text-sm font-medium text-gray-700">Horário/Prazo (Ex: 09:00:00 ou 1º dia útil)</label>
+                    <input type="text" id="newHorario" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <p class="text-xs text-gray-500 mt-1">Use a coluna do dia da semana (Seg, Ter, etc.) para marcar o agendamento.</p>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-700">Dias Agendados (marque 'x'):</p>
+                    <div class="flex flex-wrap gap-2">
+                        <label class="inline-flex items-center"><input type="checkbox" id="newSeg" class="form-checkbox text-blue-600 mr-1"> Seg</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="newTer" class="form-checkbox text-blue-600 mr-1"> Ter</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="newQua" class="form-checkbox text-blue-600 mr-1"> Qua</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="newQui" class="form-checkbox text-blue-600 mr-1"> Qui</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="newSex" class="form-checkbox text-blue-600 mr-1"> Sex</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="newSab" class="form-checkbox text-blue-600 mr-1"> Sáb</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="newDom" class="form-checkbox text-blue-600 mr-1"> Dom</label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="closeAddTaskModal()" class="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600">Salvar Tarefa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Variável de estado local e o objeto Date para a data que está sendo verificada.
         let completionStatus = {}; 
@@ -138,6 +197,7 @@
         let selectedDate = new Date(); // Inicia com a data atual, será ajustada para D-1 na inicialização.
 
         const STORAGE_PREFIX = 'dailyChecklistStatus'; // Prefixo para a chave de armazenamento
+        const MASTER_DATA_KEY = 'masterChecklistData';
         
         // Constantes de Status
         const STATUS_PENDING = 'PENDING';
@@ -153,19 +213,24 @@
         const currentDateDisplay = document.getElementById('currentDateDisplay');
         const dateSelector = document.getElementById('dateSelector');
         const filterInput = document.getElementById('filterInput');
-        const statusFilterInput = document.getElementById('statusFilterInput'); // Novo elemento de filtro de status
+        const statusFilterInput = document.getElementById('statusFilterInput'); 
         const todayTasksContainer = document.getElementById('todayTasksContainer');
         const allTasksBody = document.getElementById('allTasksBody');
         const loadingMessage = document.getElementById('loadingMessage');
         const noTasksMessage = document.getElementById('noTasksMessage');
         const exportButton = document.getElementById('exportButton');
         const resetButton = document.getElementById('resetButton');
+        const addTaskButton = document.getElementById('addTaskButton');
+        const addTaskModal = document.getElementById('addTaskModal');
+        const addTaskForm = document.getElementById('addTaskForm');
+
 
         let filterText = ''; // Variável para armazenar o texto de filtro
         let statusFilter = 'ALL'; // Variável para armazenar o filtro de status
+        let rawChecklistData = []; // Dados mestres carregados
 
-        // Dados consolidados da planilha dado.xlsx - Planilha1.csv
-        const rawChecklistData = [
+        // Dados consolidados da planilha dado.xlsx - Planilha1.csv (Usado apenas como fallback inicial)
+        const defaultRawChecklistData = [
             // ATIVIDADES GESTÃO DE DADOS (70 atividades)
             { atividade: "Bom Dia Assim Saúde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Paulo Lima" },
             { atividade: "Relatório de Gestão de Ocorrências Assim Saúde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Francisco Alves" },
@@ -243,6 +308,64 @@
 
 
         /**
+         * Gera um ID único e estável para a tarefa com base na atividade e horário.
+         * Este ID é usado para rastrear o status de conclusão no localStorage.
+         */
+        function getTaskId(task) {
+            const uniqueString = `${task.atividade.trim()}_${task.horario.trim()}`;
+            let hash = 0;
+            for (let i = 0; i < uniqueString.length; i++) {
+                const char = uniqueString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0;
+            }
+            return 'task_' + Math.abs(hash).toString(36);
+        }
+
+        /**
+         * Gera um ID único para a chave primária da lista mestra.
+         */
+        function generatePkId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2);
+        }
+
+        /**
+         * Salva a estrutura mestra da checklist no LocalStorage.
+         */
+        function saveChecklistData() {
+            localStorage.setItem(MASTER_DATA_KEY, JSON.stringify(rawChecklistData));
+            renderAllTasks();
+            renderTodayTasks();
+        }
+
+        /**
+         * Carrega a estrutura mestra da checklist do LocalStorage ou usa o fallback.
+         */
+        function loadAndInitializeData() {
+            const storedData = localStorage.getItem(MASTER_DATA_KEY);
+            if (storedData) {
+                try {
+                    rawChecklistData = JSON.parse(storedData);
+                } catch (e) {
+                    console.error("Erro ao carregar dados mestres do LocalStorage. Usando dados padrão.", e);
+                    rawChecklistData = defaultRawChecklistData;
+                }
+            } else {
+                rawChecklistData = defaultRawChecklistData;
+            }
+            
+            // Garante que todos os itens tenham um pkId para edição
+            rawChecklistData = rawChecklistData.map(task => {
+                if (!task.pkId) {
+                    task.pkId = generatePkId();
+                }
+                return task;
+            });
+            saveChecklistData();
+        }
+
+
+        /**
          * Converte um objeto Date para a string YYYY-MM-DD (formato de chave e input date).
          */
         function dateToISO(date) {
@@ -259,20 +382,6 @@
          */
         function getStorageKey(date) {
             return `${STORAGE_PREFIX}_${dateToISO(date)}`;
-        }
-
-        /**
-         * Gera um ID único e estável para a tarefa com base na atividade e horário.
-         */
-        function getTaskId(task) {
-            const uniqueString = `${task.atividade.trim()}_${task.horario.trim()}`;
-            let hash = 0;
-            for (let i = 0; i < uniqueString.length; i++) {
-                const char = uniqueString.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash |= 0;
-            }
-            return 'task_' + Math.abs(hash).toString(36);
         }
 
         /**
@@ -365,7 +474,7 @@
 
             let tasks = rawChecklistData.map(task => ({
                 ...task,
-                id: getTaskId(task)
+                id: getTaskId(task) // ID usado para buscar status de conclusão
             })).filter(task => {
                 const isScheduledForDay = task[dayOfWeekKey] === 'x';
                 const hasSpecificTime = task.horario && task.horario !== '-';
@@ -550,7 +659,7 @@
                             </button>
                             <button data-task-id="${task.id}" data-action="${STATUS_MISSED}" ${isDisabled ? 'disabled' : ''}
                                     class="action-btn flex-1 px-4 py-2 text-sm font-semibold rounded-full transition duration-150 ${missedClasses} text-white shadow-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Não Enviado
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg> Não Enviado
                             </button>
                         </div>
                     `;
@@ -596,7 +705,7 @@
                 button.addEventListener('click', (e) => {
                     const taskId = e.currentTarget.dataset.taskId;
                     const action = e.currentTarget.dataset.action;
-                    const task = tasks.find(t => t.id === taskId);
+                    const task = rawChecklistData.find(t => getTaskId(t) === taskId); // Usa rawChecklistData para encontrar a tarefa
                     const deadline = task ? task.horario : '';
                     const inputElement = document.getElementById(`observation-input-${taskId}`);
                     let observationText = inputElement ? inputElement.value.trim() : completionStatus[taskId]?.observation || '';
@@ -617,96 +726,6 @@
             } else {
                 resetButton.disabled = true;
             }
-        }
-
-        /**
-         * Exibe um modal simples no lugar de alert().
-         */
-        function showModal(title, message) {
-            let modal = document.getElementById('customModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'customModal';
-                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300';
-                modal.innerHTML = `
-                    <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4" id="modalTitle"></h3>
-                        <p class="text-gray-600 mb-6" id="modalMessage"></p>
-                        <button onclick="document.getElementById('customModal').classList.add('opacity-0'); setTimeout(() => document.getElementById('customModal').classList.add('hidden'), 300);" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">OK</button>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-            }
-            
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').textContent = message;
-            
-            modal.classList.remove('hidden', 'opacity-0');
-            modal.querySelector('#modalContent').classList.remove('opacity-0', 'scale-95');
-        }
-
-
-        /**
-         * Renderiza a tabela completa do checklist.
-         */
-        function renderAllTasks() {
-            allTasksBody.innerHTML = '';
-
-            // 1. Aplica o filtro de texto a TODAS as tarefas
-            const filteredTasks = rawChecklistData.filter(task => {
-                if (filterText) {
-                    const activityMatch = task.atividade.toLowerCase().includes(filterText);
-                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText);
-                    return activityMatch || responsibleMatch;
-                }
-                return true;
-            });
-            
-            filteredTasks.forEach(task => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
-                
-                let statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`;
-                
-                switch (task.status) {
-                    case 'Diário':
-                        statusBadge += ' bg-blue-100 text-blue-800">Diário</span>';
-                        break;
-                    case 'Semanal':
-                        statusBadge += ' bg-yellow-100 text-yellow-800">Semanal</span>';
-                        break;
-                    case 'Mensal':
-                        statusBadge += ' bg-purple-100 text-purple-800">Mensal</span>';
-                        break;
-                    case 'Quinzenal':
-                        statusBadge += ' bg-indigo-100 text-indigo-800">Quinzenal</span>';
-                        break;
-                    case 'Suspenso':
-                        statusBadge += ' bg-gray-100 text-gray-800">Suspenso</span>';
-                        break;
-                    case 'Prisma':
-                    case 'Prisma/Projeto':
-                    case 'Por Demanda':
-                        statusBadge += ' bg-red-100 text-red-800">${task.status}</span>';
-                        break;
-                    default:
-                        statusBadge = task.status;
-                        break;
-                }
-                
-                const horarioDisplay = task.horario && task.horario !== '-' ? 
-                    (task.status === 'Diário' || task.status === 'Semanal' ? task.horario.substring(0, 5) : task.horario) 
-                    : '-';
-
-
-                row.innerHTML = `
-                    <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${task.atividade}</td>
-                    <td class="px-3 py-3 whitespace-nowrap">${statusBadge}</td>
-                    <td class="px-3 py-3 text-sm font-semibold text-gray-700">${horarioDisplay}</td>
-                    <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${task.responsavel || '-'}</td>
-                `;
-                allTasksBody.appendChild(row);
-            });
         }
 
         /**
@@ -777,10 +796,230 @@
                 document.body.removeChild(link);
             }
         }
+
+        /**
+         * Exibe um modal simples no lugar de alert().
+         */
+        function showModal(title, message) {
+            let modal = document.getElementById('customModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'customModal';
+                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300';
+                modal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4" id="modalTitle"></h3>
+                        <p class="text-gray-600 mb-6" id="modalMessage"></p>
+                        <button onclick="document.getElementById('customModal').classList.add('opacity-0'); setTimeout(() => document.getElementById('customModal').classList.add('hidden'), 300);" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            
+            modal.classList.remove('hidden', 'opacity-0');
+            modal.querySelector('#modalContent').classList.remove('opacity-0', 'scale-95');
+        }
+
+
+        /**
+         * Renderiza a tabela completa do checklist.
+         */
+        function renderAllTasks() {
+            allTasksBody.innerHTML = '';
+
+            // 1. Aplica o filtro de texto a TODAS as tarefas
+            const filteredTasks = rawChecklistData.filter(task => {
+                if (filterText) {
+                    const activityMatch = task.atividade.toLowerCase().includes(filterText);
+                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText);
+                    return activityMatch || responsibleMatch;
+                }
+                return true;
+            });
+            
+            filteredTasks.forEach((task, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                let statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`;
+                
+                switch (task.status) {
+                    case 'Diário':
+                        statusBadge += ' bg-blue-100 text-blue-800">Diário</span>';
+                        break;
+                    case 'Semanal':
+                        statusBadge += ' bg-yellow-100 text-yellow-800">Semanal</span>';
+                        break;
+                    case 'Mensal':
+                        statusBadge += ' bg-purple-100 text-purple-800">Mensal</span>';
+                        break;
+                    case 'Quinzenal':
+                        statusBadge += ' bg-indigo-100 text-indigo-800">Quinzenal</span>';
+                        break;
+                    case 'Suspenso':
+                        statusBadge += ' bg-gray-100 text-gray-800">Suspenso</span>';
+                        break;
+                    case 'Prisma':
+                    case 'Prisma/Projeto':
+                    case 'Por Demanda':
+                        statusBadge += ' bg-red-100 text-red-800">${task.status}</span>';
+                        break;
+                    default:
+                        statusBadge = task.status;
+                        break;
+                }
+                
+                const horarioDisplay = task.horario && task.horario !== '-' ? 
+                    (task.status === 'Diário' || task.status === 'Semanal' ? task.horario.substring(0, 5) : task.horario) 
+                    : '-';
+
+
+                row.innerHTML = `
+                    <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <span id="atividade-${task.pkId}" data-pk-id="${task.pkId}" class="editable">
+                            ${task.atividade}
+                        </span>
+                    </td>
+                    <td class="px-3 py-3 whitespace-nowrap">${statusBadge}</td>
+                    <td class="px-3 py-3 text-sm font-semibold text-gray-700">${horarioDisplay}</td>
+                    <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${task.responsavel || '-'}</td>
+                `;
+                allTasksBody.appendChild(row);
+            });
+            
+            // Adiciona listeners para edição da Atividade
+            document.querySelectorAll('.editable').forEach(span => {
+                span.addEventListener('click', (e) => startRename(e.target));
+            });
+        }
         
+        /**
+         * Inicia o processo de renomeação de uma atividade.
+         */
+        function startRename(spanElement) {
+            const pkId = spanElement.dataset.pkId;
+            const originalText = spanElement.textContent.trim();
+            
+            // Cria um input para edição
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'w-full border border-blue-400 p-1 text-sm font-medium rounded-md';
+            input.value = originalText;
+            
+            // Substitui o span pelo input
+            spanElement.replaceWith(input);
+            input.focus();
+            
+            // Listener para salvar ao perder o foco (blur) ou pressionar Enter
+            const saveRename = () => {
+                const newActivity = input.value.trim();
+                
+                if (newActivity !== originalText && newActivity !== '') {
+                    // Encontra a tarefa pelo ID único
+                    const taskIndex = rawChecklistData.findIndex(t => t.pkId === pkId);
+                    
+                    if (taskIndex > -1) {
+                        const originalTask = rawChecklistData[taskIndex];
+                        const oldTaskId = getTaskId(originalTask);
+
+                        // Renomeia
+                        rawChecklistData[taskIndex].atividade = newActivity;
+                        saveChecklistData();
+                        
+                        // NOTA DE AVISO: Renomear limpa o status de conclusão
+                        if (completionStatus[oldTaskId]) {
+                            delete completionStatus[oldTaskId];
+                            showModal('Sucesso e Aviso', 'Tarefa renomeada com sucesso! Um aviso: o status de verificação anterior para esta tarefa foi removido, pois a identificação do item (Task ID) foi alterada.');
+                        } else {
+                            showModal('Sucesso', 'Tarefa renomeada com sucesso.');
+                        }
+                        
+                        // Salva e renderiza novamente a lista
+                        saveChecklistData();
+                        renderAllTasks();
+                    }
+                } else {
+                    // Se o texto for vazio ou igual ao original, apenas retorna o span
+                    input.replaceWith(spanElement);
+                }
+                
+                // Limpa listeners para evitar duplicação
+                input.removeEventListener('blur', saveRename);
+                input.removeEventListener('keypress', handleKey);
+                renderAllTasks();
+            };
+
+            const handleKey = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveRename();
+                }
+            };
+
+            input.addEventListener('blur', saveRename);
+            input.addEventListener('keypress', handleKey);
+        }
+
+        // --- Funções do Modal de Adição ---
+
+        function openAddTaskModal() {
+            addTaskModal.classList.remove('hidden');
+            document.getElementById('newActivity').focus();
+        }
+
+        function closeAddTaskModal() {
+            addTaskModal.classList.add('hidden');
+            addTaskForm.reset();
+        }
+
+        function handleAddTask(e) {
+            e.preventDefault();
+            
+            const newActivity = document.getElementById('newActivity').value.trim();
+            const newStatus = document.getElementById('newStatus').value;
+            const newResponsavel = document.getElementById('newResponsavel').value.trim();
+            const newHorario = document.getElementById('newHorario').value.trim();
+            
+            // Coleta os dias da semana
+            const days = {
+                Seg: document.getElementById('newSeg').checked ? 'x' : '',
+                Ter: document.getElementById('newTer').checked ? 'x' : '',
+                Qua: document.getElementById('newQua').checked ? 'x' : '',
+                Qui: document.getElementById('newQui').checked ? 'x' : '',
+                Sex: document.getElementById('newSex').checked ? 'x' : '',
+                Sáb: document.getElementById('newSab').checked ? 'x' : '',
+                Dom: document.getElementById('newDom').checked ? 'x' : '',
+            };
+
+            if (!newActivity || !newResponsavel || !newHorario) {
+                 showModal('Erro', 'Por favor, preencha todos os campos obrigatórios.');
+                 return;
+            }
+
+            const newTask = {
+                pkId: generatePkId(), // ID de chave primária estável
+                atividade: newActivity,
+                status: newStatus,
+                horario: newHorario,
+                responsavel: newResponsavel,
+                ...days,
+            };
+
+            rawChecklistData.push(newTask);
+            saveChecklistData();
+            closeAddTaskModal();
+            showModal('Sucesso', 'Nova tarefa adicionada com sucesso!');
+        }
+
         // --- Inicialização e Loop de Atualização ---
         
         function initializeApp() {
+            // 0. Carrega dados mestres (permite persistência de adição/renomeação)
+            loadAndInitializeData();
+
             // 1. Calcula a data D-1 corretamente. Define a hora para meia-noite (00:00:00) para garantir consistência.
             const today = new Date();
             today.setHours(0, 0, 0, 0); // Zera o tempo de 'hoje'
@@ -793,32 +1032,32 @@
             dateSelector.value = defaultDateISO;
             selectedDate = defaultDate;
 
-            // 3. Adiciona listener para a mudança de data
+            // 3. Adiciona listeners de UI
             dateSelector.addEventListener('change', (e) => {
-                // Cria um objeto Date a partir da string YYYY-MM-DD, forçando a meia-noite local para consistência
                 const newDate = new Date(e.target.value + 'T00:00:00'); 
                 selectedDate = newDate;
                 renderTodayTasks();
             });
 
-            // 4. Adiciona listener para o campo de filtro de texto
             filterInput.addEventListener('input', (e) => {
                 filterText = e.target.value.toLowerCase().trim();
-                renderAllTasks(); // Aplica o filtro na tabela completa
-                renderTodayTasks(); // Aplica o filtro na lista de auditoria
+                renderAllTasks(); 
+                renderTodayTasks(); 
             });
             
-            // 5. Adiciona listener para o campo de filtro de status
             statusFilterInput.addEventListener('change', (e) => {
                 statusFilter = e.target.value;
-                renderTodayTasks(); // Aplica o filtro de status na lista de auditoria
+                renderTodayTasks(); 
             });
+            
+            addTaskButton.addEventListener('click', openAddTaskModal);
+            addTaskForm.addEventListener('submit', handleAddTask);
 
-            // 6. Inicia a renderização para a data padrão (D-1)
+            // 4. Inicia a renderização para a data padrão (D-1)
             renderAllTasks();
             renderTodayTasks();
             
-            // 7. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
+            // 5. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
             setInterval(renderTodayTasks, 60000); 
             
             exportButton.addEventListener('click', exportToCSV);
