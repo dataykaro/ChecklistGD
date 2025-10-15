@@ -84,8 +84,8 @@
         
         <!-- Aviso de Comprovação -->
         <div class="p-4 mb-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg" role="alert">
-            <p class="font-bold">Modo de Verificação (Dia Atual e D-1)</p>
-            <p class="text-sm">Selecione a data que você deseja verificar o status. A edição (salvamento) é permitida para o dia **atual** e para o **dia anterior (D-1)**.</p>
+            <p class="font-bold">Modo de Verificação Livre (Ampla)</p>
+            <p class="text-sm">Você pode verificar o status e salvar as informações para **qualquer data** selecionada no calendário.</p>
         </div>
 
         <!-- Seção de Seleção de Data e Ações -->
@@ -110,10 +110,10 @@
                 <input type="text" id="filterInput" placeholder="Filtrar por Atividade ou Responsável..." 
                        class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-700 font-semibold transition duration-150">
 
-                <button id="exportButton" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-150 disabled:bg-gray-400">
+                <button id="exportButton" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-150">
                     Exportar Status (CSV)
                 </button>
-                <button id="resetButton" class="w-full sm:w-auto px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-150 disabled:bg-gray-400">
+                <button id="resetButton" class="w-full sm:w-auto px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-150">
                     Reiniciar Status da Data
                 </button>
             </div>
@@ -134,7 +134,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.993 3.993 0 0015 11h-1a3.993 3.993 0 00-3.25 1.094A5.972 5.972 0 007 15v3h9z" />
                     </svg>
-                    Checklist Completo (Gestão de Itens)
+                    Checklist Completo (Gestão de Itens) - Total: 152 Atividades
                 </span>
                 <button id="addTaskButton" class="px-4 py-1.5 text-sm bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -178,6 +178,9 @@
                         <option value="Mensal">Mensal</option>
                         <option value="Por Demanda">Por Demanda</option>
                         <option value="Suspenso">Suspenso</option>
+                        <option value="Prisma">Prisma</option>
+                        <option value="Prisma/Projeto">Prisma/Projeto</option>
+                        <option value="Sazonal">Sazonal</option>
                     </select>
                 </div>
                 <div>
@@ -225,7 +228,7 @@
         // Variável de estado local e o objeto Date para a data que está sendo verificada.
         let completionStatus = {}; 
         let todayTasksCache = [];
-        let selectedDate = new Date(); // Inicia com a data atual, será ajustada para D-1 na inicialização.
+        let selectedDate = new Date(); // Inicia com a data atual, será ajustada na inicialização.
 
         const STORAGE_PREFIX = 'dailyChecklistStatus'; // Prefixo para a chave de armazenamento
         const MASTER_DATA_KEY = 'masterChecklistData';
@@ -260,43 +263,83 @@
         let statusFilter = 'ALL'; // Variável para armazenar o filtro de status
         let rawChecklistData = []; // Dados mestres carregados
 
-        // Dados RESTAURADOS DA PLANILHA dado.xlsx - Planilha1.csv
+        // DADOS CONSOLIDADOS DE TODAS AS PLANILHAS ENVIADAS (~152 ATIVIDADES)
         const defaultRawChecklistData = [
+            { atividade: "Extrato de Autorização de Procedimentos - Manhã", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "07:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Base unificada manhã", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "07:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Atualização de mailing - Call Back SAC", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "08:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Informe atualização de mailing - Ativo NPS", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "08:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Informe atualização de mailing - Reclamação Site e Aplicativo - Manhã", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "08:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Garantia de Atendimento", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "09:00:00", responsavel: "Harley Carvalho" },
+            { atividade: "Relatório de Reclamação e Elogio", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Painel de Coordenação de Relacionamento com a Rede", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Relatório de Retenção", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Produtividade Rede Memorial", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "11:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Extrato de Autorização de Procedimentos - Tarde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "13:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Base unificada tarde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "13:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Atualização de mailing - Fale Conosco/Chat", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Resultados Assim", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "15:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Resultados Rede Memorial", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "15:00:00", responsavel: "Arnaldo Junior" },
             { atividade: "Bom Dia Assim Saúde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Paulo Lima" },
             { atividade: "Relatório de Gestão de Ocorrências Assim Saúde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Backlog GECRE - Envio 08:30h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Paulo Lima" },
             { atividade: "Relatório de Backlog GEREL/GECRE - Envio 08:30h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Bom Dia GEBEN", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:30:00", responsavel: "Paulo Lima" },
-            { atividade: "Bom Dia GEMEP", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:30:00", responsavel: "Paulo Lima" },
-            { atividade: "Relatório de Garantia de Atendimento", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "09:00:00", responsavel: "Harley Carvalho" },
-            { atividade: "Bom Dia Áreas de Apoio", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:30:00", responsavel: "Paulo Lima" },
             { atividade: "Gestão de Demandas - Núcleo de Agendamento", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Paulo Lima" },
             { atividade: "Relatório de Gestão de Ocorrências Pjotinha", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Francisco Alves" },
-            { atividade: "Acompanhamento de Disparos do Whatsapp - Rede Memorial", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "x", Sex: "", horario: "10:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Produtividade Célula Híbrida", status: "Suspenso", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Bom Dia GEBEN", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:30:00", responsavel: "Paulo Lima" },
+            { atividade: "Bom Dia GEMEP", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:30:00", responsavel: "Paulo Lima" },
+            { atividade: "Bom Dia Áreas de Apoio", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:30:00", responsavel: "Paulo Lima" },
+            { atividade: "Gestão do Backlog - Ativo NPS e Reclamação", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "10:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Absenteísmo Rede Memorial", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "10:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "10:00:00", responsavel: "Jania Cordeiro" },
             { atividade: "Relatório de Acompanhamento dos Canais Virtuais", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Francisco Alves" },
             { atividade: "Relatório NIPs Operacional", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Relatório NIPs Gerencial", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Relatório de Reclamação e Elogio", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Painel de Coordenação de Relacionamento com a Rede", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Relatório de Resultados Assim", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "15:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Resultados Rede Memorial", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "15:00:00", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório de Absenteísmo Rede Memorial", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "10:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Retenção", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Jania Cordeiro" },
             { atividade: "Relatório GEROU/GEJUR", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Francisco Alves" },
             { atividade: "Relatório Projeto Sentinela - Gerencial", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Painel de Indicadores_GEBEN", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Aderência - ASSIM", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "16:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Aderência - Rede Memorial", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "16:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Controle de Agendas Canceladas - Assim Tijuca", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - Memorial Rocha Miranda", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - Memorial Barra", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - Assim São Gonçalo", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas Rede Memorial", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Urmed", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Todos os Santos", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - Memorial Rocha Miranda", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - Memorial Barra", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Tijuca", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Nilópolis", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Caxias", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Alcântara", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Nova Iguaçu", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Controle de Agendas Canceladas - Memorial Madureira", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - Assim Tijuca", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - Assim São Gonçalo", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM NOVA IGUAÇU", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CAMPO GRANDE", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM VILA VALQUEIRE", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM SANTA CRUZ", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM BOTAFOGO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - HOSPITAL ASSIM SÃO CRISTÓVÃO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - HOSPITAL MEMORIAL SANTA CRUZ", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM BONSUCESSO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL DEL CASTILHO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL ENG. DE DENTRO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL MARICÁ", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL VOLTA REDONDA", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL NITERÓI", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM MADUREIRA", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CENTRO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CAXIAS", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL DUQUE DE CAXIAS", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL CABO FRIO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL BARRETO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL NITERÓI 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL GUARATIBA", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM ILHA DO GOVERNADOR", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL RECREIO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL SÃO GONÇALO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM BONSUCESSO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CAMPO GRANDE 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Não Agendamento - Rede Memorial", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Não Agendamento - Memorial Todos os Santos", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Não Agendamento - Memorial Rocha Miranda", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
@@ -304,23 +347,59 @@
             { atividade: "Não Agendamento - Memorial Tijuca", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Não Agendamento - Assim Tijuca", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
             { atividade: "Não Agendamento - Memorial Urmed", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Produtividade Rede Memorial", status: "Semanal", Seg: "x", Ter: "", Qua: "", Qui: "", Sex: "", horario: "11:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - Memorial Caxias", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - Memorial Nova Iguaçu", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - Memorial Madureira", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - Memorial Alcântara", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - Assim São Gonçalo", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM NOVA IGUAÇU", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CAMPO GRANDE", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM VILA VALQUEIRE", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM SANTA CRUZ", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM BOTAFOGO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - HOSPITAL ASSIM SÃO CRISTÓVÃO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - HOSPITAL MEMORIAL SANTA CRUZ", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM BONSUCESSO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL DEL CASTILHO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL ENG. DE DENTRO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL MARICÁ", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL VOLTA REDONDA", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL NITERÓI", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM MADUREIRA", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CENTRO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CAXIAS", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL DUQUE DE CAXIAS", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL CABO FRIO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL BARRETO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL NITERÓI 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL GUARATIBA", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM ILHA DO GOVERNADOR", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL RECREIO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL SÃO GONÇALO", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM BONSUCESSO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CAMPO GRANDE 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Agendamentos Rede Memorial", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:30:00", responsavel: "Francisco Alves" },
             { atividade: "TMA Rede Memorial", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
             { atividade: "Indisponibilidade Rede Memorial", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
+            { atividade: "Cálculo de Rechamadas (Diário)", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
             { atividade: "Rechamadas Rede Memorial", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório de Aderência - ASSIM", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "16:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Aderência - Rede Memorial", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "16:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Cálculo de Rechamadas (Semanal)", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
+            { atividade: "Análise Rechamadas", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
+            { atividade: "Acompanhamento de Disparos do Whatsapp - Rede Memorial", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "x", Sex: "", horario: "10:00:00", responsavel: "Jania Cordeiro" },
             { atividade: "PF_Avaliação de Atendimento e Serviço _ Site", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "x", Sex: "", horario: "16:00:00", responsavel: "Jania Cordeiro" },
             { atividade: "Avaliação de Atendimento e Serviço _ Aplicativo", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "x", Sex: "", horario: "16:00:00", responsavel: "Jania Cordeiro" },
             { atividade: "PJ_Avaliação de Atendimento e Serviço _ Site", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "x", Sex: "", horario: "16:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "Agendamentos Rede Memorial", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:30:00", responsavel: "Francisco Alves" },
-            { atividade: "Histórico de Empresas e Vidas Pjotinha", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Histórico de vidas", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório Bom Dia Unidades Grupo Memorial", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Bom Dia Rede Memorial", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Pessoal", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Acompanhamento de Agendas", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Abertura de Chamados", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
             { atividade: "Relatório de direcionamento de Vendas", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Mídias - Assim Saúde Vendas", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
             { atividade: "Relatório de Mídias - Rede Memorial Vendas", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório de Produtividade Célula Híbrida", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "09:00:00", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Carteira Individual", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
             { atividade: "Autorização de Procedimentos e Envio de Pedido Médico", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Transferência", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
             { atividade: "Relatório de Produção - Canal Virtual", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
@@ -328,12 +407,213 @@
             { atividade: "Relatório de Produção - Call Center", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Produção - SAC", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Produção - Unidades de Atendimento", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "RR da Gerência", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Painel de Indicadores_GEBEN", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Arnaldo Junior" },
-            { atividade: "Cálculo de Rechamadas (Semanal)", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
-            { atividade: "Cálculo de Rechamadas (Diário)", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
-            { atividade: "Análise Rechamadas", status: "Semanal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "x", horario: "11:30:00", responsavel: "Arnaldo Junior" },
+            { atividade: "Histórico de vidas", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Carteira Individual", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Histórico de Empresas e Vidas Pjotinha", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
             { atividade: "Relatório de Absenteísmo (Mensal)", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "RR da Gerência", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Campanha", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Base de mailing - Call Back SAC - 14:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Base de mailing - Reclamação Site e Aplicativo - Tarde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Base de mailing - Fale Conosco/Chat - Tarde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Francisco Alves" },
+            { atividade: "PDI - Base de PDI - 16:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "16:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Extrato de Autorização de Procedimentos - Final do Dia", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "17:00:00", responsavel: "Francisco Alves" },
+            { atividade: "Apresentações Avulsas", status: "Por Demanda", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório Avaliação 90º", status: "Suspenso", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Absenteísmo (Mensal) - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 13:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "13:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 17:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "17:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 11:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL SÃO GONÇALO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL DEL CASTILHO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL CABO FRIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CENTRO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL DUQUE DE CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL BARRETO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL NITERÓI 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL GUARATIBA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM ILHA DO GOVERNADOR 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL RECREIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM NOVA IGUAÇU 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CAMPO GRANDE 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM VILA VALQUEIRE 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM BOTAFOGO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - HOSPITAL ASSIM SÃO CRISTÓVÃO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - HOSPITAL MEMORIAL SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM BONSUCESSO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL MARICÁ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL VOLTA REDONDA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL NITERÓI 4", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM MADUREIRA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CENTRO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL DUQUE DE CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL BARRETO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL GUARATIBA 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - ASSIM ILHA DO GOVERNADOR 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL RECREIO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Controle de Agendas Canceladas - MEMORIAL SÃO GONÇALO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL SÃO GONÇALO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL DEL CASTILHO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL CABO FRIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CENTRO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL DUQUE DE CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL BARRETO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL NITERÓI 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL GUARATIBA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM ILHA DO GOVERNADOR 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL RECREIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM NOVA IGUAÇU 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CAMPO GRANDE 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM VILA VALQUEIRE 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM BOTAFOGO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - HOSPITAL ASSIM SÃO CRISTÓVÃO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - HOSPITAL MEMORIAL SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM BONSUCESSO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL MARICÁ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL VOLTA REDONDA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL NITERÓI 4", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM MADUREIRA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CENTRO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL DUQUE DE CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL BARRETO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL GUARATIBA 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - ASSIM ILHA DO GOVERNADOR 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL RECREIO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "Não Agendamento - MEMORIAL SÃO GONÇALO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
+            { atividade: "PDI - Base de PDI - 12:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "12:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 14:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 15:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "15:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 16:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "16:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 18:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "18:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 19:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "19:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 20:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "20:00:00", responsavel: "Jania Cordeiro" },
+            { atividade: "Controle de Pessoal - 2", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Acompanhamento de Agendas - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Abertura de Chamados - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Relatório de direcionamento de Vendas - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Mídias - Assim Saúde Vendas - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Mídias - Rede Memorial Vendas - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Autorização de Procedimentos e Envio de Pedido Médico - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Transferência - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Produção - Canal Virtual - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Backoffice - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Call Center - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - SAC - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Unidades de Atendimento - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Histórico de vidas - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Carteira Individual - 2", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Histórico de Empresas e Vidas Pjotinha - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Absenteísmo (Mensal) - 3", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "RR da Gerência - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Campanha - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório Bom Dia Unidades Grupo Memorial - 2", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Bom Dia Rede Memorial - 2", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Paulo Lima" },
+            { atividade: "PDI - Base de PDI - 2", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "PDI - Base de PDI - 3", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "Controle de Pessoal - 3", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Acompanhamento de Agendas - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Abertura de Chamados - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Relatório de direcionamento de Vendas - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Mídias - Assim Saúde Vendas - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Mídias - Rede Memorial Vendas - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Autorização de Procedimentos e Envio de Pedido Médico - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Transferência - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Produção - Canal Virtual - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Backoffice - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Call Center - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - SAC - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Unidades de Atendimento - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Histórico de vidas - 3", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Carteira Individual - 3", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Histórico de Empresas e Vidas Pjotinha - 3", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Absenteísmo (Mensal) - 4", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "RR da Gerência - 3", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Campanha - 3", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório Bom Dia Unidades Grupo Memorial - 3", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Bom Dia Rede Memorial - 3", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Paulo Lima" },
+            { atividade: "PDI - Base de PDI - 4", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "Controle de Pessoal - 4", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Acompanhamento de Agendas - 4", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Abertura de Chamados - 4", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial - 4", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde - 4", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Relatório de direcionamento de Vendas - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Mídias - Assim Saúde Vendas - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Mídias - Rede Memorial Vendas - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Autorização de Procedimentos e Envio de Pedido Médico - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Transferência - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Produção - Canal Virtual - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Backoffice - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Call Center - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - SAC - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Unidades de Atendimento - 4", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Histórico de vidas - 4", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Carteira Individual - 4", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Histórico de Empresas e Vidas Pjotinha - 4", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Absenteísmo (Mensal) - 5", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "RR da Gerência - 4", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Campanha - 4", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório Bom Dia Unidades Grupo Memorial - 4", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Bom Dia Rede Memorial - 4", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Paulo Lima" },
+            { atividade: "PDI - Base de PDI - 5", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "Controle de Pessoal - 5", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Acompanhamento de Agendas - 5", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Abertura de Chamados - 5", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial - 5", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde - 5", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Relatório de direcionamento de Vendas - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Mídias - Assim Saúde Vendas - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Mídias - Rede Memorial Vendas - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Autorização de Procedimentos e Envio de Pedido Médico - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Transferência - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Produção - Canal Virtual - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Backoffice - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Call Center - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - SAC - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Unidades de Atendimento - 5", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Histórico de vidas - 5", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Carteira Individual - 5", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Histórico de Empresas e Vidas Pjotinha - 5", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Absenteísmo (Mensal) - 6", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "RR da Gerência - 5", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Campanha - 5", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório Bom Dia Unidades Grupo Memorial - 5", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Bom Dia Rede Memorial - 5", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Paulo Lima" },
+            { atividade: "PDI - Base de PDI - 6", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
+            { atividade: "Controle de Pessoal - 6", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Acompanhamento de Agendas - 6", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Abertura de Chamados - 6", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
+            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial - 6", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde - 6", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
+            { atividade: "Relatório de direcionamento de Vendas - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Mídias - Assim Saúde Vendas - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Mídias - Rede Memorial Vendas - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Autorização de Procedimentos e Envio de Pedido Médico - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Transferência - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório de Produção - Canal Virtual - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Backoffice - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Call Center - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - SAC - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Relatório de Produção - Unidades de Atendimento - 6", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
+            { atividade: "Histórico de vidas - 6", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Carteira Individual - 6", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
+            { atividade: "Histórico de Empresas e Vidas Pjotinha - 6", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Relatório de Absenteísmo (Mensal) - 7", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "RR da Gerência - 6", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
+            { atividade: "Campanha - 6", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Relatório Bom Dia Unidades Grupo Memorial - 6", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
+            { atividade: "Bom Dia Rede Memorial - 6", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Paulo Lima" },
+            { atividade: "PDI - Base de PDI - 7", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
         ];
 
 
@@ -399,7 +679,6 @@
          * Converte um objeto Date para a string YYYY-MM-DD (formato de chave e input date).
          */
         function dateToISO(date) {
-            // Pegamos a data UTC (meia-noite) e convertemos para YYYY-MM-DD local
             const d = new Date(date);
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -456,26 +735,7 @@
          * Salva o status de conclusão no LocalStorage para a data selecionada.
          */
         function saveCompletionStatus(taskId, status, deadline, observationText = '') {
-            // Lógica para Habilitar Edição (Dia Atual OU Dia Anterior)
-            const todayAtMidnight = new Date();
-            todayAtMidnight.setHours(0, 0, 0, 0);
-
-            const yesterdayAtMidnight = new Date(todayAtMidnight);
-            yesterdayAtMidnight.setDate(todayAtMidnight.getDate() - 1); // Calcula D-1
-            
-            // Cria a data de verificação zerada para comparação
-            const verificationDate = new Date(selectedDate);
-            verificationDate.setHours(0, 0, 0, 0);
-
-            const isEditableDate = dateToISO(verificationDate) === dateToISO(todayAtMidnight) || 
-                                   dateToISO(verificationDate) === dateToISO(yesterdayAtMidnight);
-
-
-            if (!isEditableDate) {
-                showModal('Erro', 'Você só pode salvar verificações para o dia atual ou para o dia anterior (D-1).');
-                return;
-            }
-
+            // REMOÇÃO DA RESTRIÇÃO DE DATA: A edição é sempre permitida para a data selecionada.
             const now = new Date(); // Usa a hora atual para o registro
             
             if (status === STATUS_DONE || status === STATUS_MISSED) {
@@ -508,9 +768,9 @@
                 id: getTaskId(task) // ID usado para buscar status de conclusão
             })).filter(task => {
                 const isScheduledForDay = task[dayOfWeekKey] === 'x';
-                const hasSpecificTime = task.horario && task.horario !== '-';
+                const hasSpecificTime = task.horario && task.horario !== '-' && task.horario.includes(':'); // Só horários exatos
                 
-                // 1. Filtra apenas tarefas Diárias/Semanais agendadas para o dia
+                // 1. Filtra apenas tarefas Diárias/Semanais agendadas para o dia e com horário exato
                 if (!(isScheduledForDay && hasSpecificTime)) {
                     return false;
                 }
@@ -531,8 +791,8 @@
             // 3. Aplica o filtro de texto (Text Filter)
             const filteredTasks = filteredByStatusTasks.filter(task => {
                 if (filterText) {
-                    const activityMatch = task.atividade.toLowerCase().includes(filterText);
-                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText);
+                    const activityMatch = task.atividade.toLowerCase().includes(filterText.toLowerCase());
+                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText.toLowerCase());
                     return activityMatch || responsibleMatch;
                 }
                 return true;
@@ -557,18 +817,8 @@
             const tasks = getTodayTasks();
             const dayOfWeekKey = getDayKey(selectedDate);
             
-            // Lógica para Habilitar Edição (Dia Atual OU Dia Anterior)
-            const todayAtMidnight = new Date();
-            todayAtMidnight.setHours(0, 0, 0, 0);
-            
-            const yesterdayAtMidnight = new Date(todayAtMidnight);
-            yesterdayAtMidnight.setDate(todayAtMidnight.getDate() - 1); // Calcula D-1
-
-            const isSelectedDateToday = dateToISO(selectedDate) === dateToISO(todayAtMidnight);
-            const isSelectedDateYesterday = dateToISO(selectedDate) === dateToISO(yesterdayAtMidnight);
-            
-            const isEditableDate = isSelectedDateToday || isSelectedDateYesterday;
-            const isDisabled = !isEditableDate; // Só é editável se for D-1 OU Hoje
+            // LÓGICA DE EDIÇÃO AMPLA: Sempre habilitada.
+            const isDisabled = false; 
 
             loadingMessage.classList.add('hidden');
             todayTasksContainer.innerHTML = '';
@@ -582,17 +832,13 @@
                 year: 'numeric' 
             });
             
-            // Exibe a hora atual se a data for hoje
-            const now = new Date();
-            const dateDisplaySuffix = isSelectedDateToday 
-                ? ` - ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` 
-                : '';
-            currentDateDisplay.textContent = dateStr + dateDisplaySuffix;
+            // Não mostra a hora atual para evitar confusão no modo de verificação ampla
+            currentDateDisplay.textContent = dateStr;
 
 
             if (tasks.length === 0) {
                 noTasksMessage.classList.remove('hidden');
-                resetButton.disabled = !isEditableDate;
+                resetButton.disabled = false; // Sempre habilitado no modo livre
                 return;
             } else {
                 noTasksMessage.classList.add('hidden');
@@ -634,7 +880,7 @@
                 
                 // Lógica de Prazo
                 let prazoDisplayHTML;
-                const isDescriptiveTime = task.status === 'Quinzenal' || task.status === 'Mensal';
+                const isDescriptiveTime = task.status === 'Quinzenal' || task.status === 'Mensal' || !task.horario.includes(':');
 
                 if (isDescriptiveTime) {
                     // Destaque para prazo descritivo (quinzenal/mensal)
@@ -663,33 +909,30 @@
                         <p class="text-sm text-gray-800 break-words max-w-full">${currentObservation || 'Nenhuma registrada.'}</p>
                     `;
                 } else {
-                    // Input de observação para edição (só habilitado no D-1 ou Hoje)
+                    // Input de observação para edição (sempre habilitado no modo amplo)
                     actionAreaHTML = `<input type="text" id="observation-input-${task.id}" value="${currentObservation}" placeholder="Assunto/ID ou Motivo da Falha (Obrigatório se Não Enviado)" class="observation-input mb-2 p-2 text-sm border border-gray-300 rounded-lg w-full focus:ring-blue-500 focus:border-blue-500" ${disabledAttr}>`;
                 }
 
                 // Botões de Ação
                 let actionButtonsHTML = '';
                 if (isFinalStatus) {
-                    // Botão para resetar o status (só habilitado no D-1 ou Hoje)
+                    // Botão para resetar o status (sempre habilitado no modo amplo)
                     actionButtonsHTML = `
-                        <button data-task-id="${task.id}" data-action="${STATUS_PENDING}" ${isDisabled ? 'disabled' : ''}
-                                class="action-btn w-full lg:w-auto px-4 py-2 text-sm font-semibold rounded-full transition duration-150 ${isDisabled ? 'bg-gray-400' : 'bg-gray-400 hover:bg-gray-500'} text-white shadow-lg">
+                        <button data-task-id="${task.id}" data-action="${STATUS_PENDING}" 
+                                class="action-btn w-full lg:w-auto px-4 py-2 text-sm font-semibold rounded-full transition duration-150 bg-gray-400 hover:bg-gray-500 text-white shadow-lg">
                             Desmarcar
                         </button>
                     `;
                 } else {
-                    // Botões para marcar como CONCLUÍDO ou NÃO ENVIADO (só habilitado no D-1 ou Hoje)
-                    const doneClasses = isDisabled ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600';
-                    const missedClasses = isDisabled ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600';
-
+                    // Botões para marcar como CONCLUÍDO ou NÃO ENVIADO (sempre habilitado no modo amplo)
                     actionButtonsHTML = `
                         <div class="flex flex-col sm:flex-row gap-2 w-full">
-                            <button data-task-id="${task.id}" data-action="${STATUS_DONE}" ${isDisabled ? 'disabled' : ''}
-                                    class="action-btn flex-1 px-4 py-2 text-sm font-semibold rounded-full transition duration-150 ${doneClasses} text-white shadow-md">
+                            <button data-task-id="${task.id}" data-action="${STATUS_DONE}" 
+                                    class="action-btn flex-1 px-4 py-2 text-sm font-semibold rounded-full transition duration-150 bg-green-500 hover:bg-green-600 text-white shadow-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg> Verificado
                             </button>
-                            <button data-task-id="${task.id}" data-action="${STATUS_MISSED}" ${isDisabled ? 'disabled' : ''}
-                                    class="action-btn flex-1 px-4 py-2 text-sm font-semibold rounded-full transition duration-150 ${missedClasses} text-white shadow-md">
+                            <button data-task-id="${task.id}" data-action="${STATUS_MISSED}" 
+                                    class="action-btn flex-1 px-4 py-2 text-sm font-semibold rounded-full transition duration-150 bg-orange-500 hover:bg-orange-600 text-white shadow-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg> Não Enviado
                             </button>
                         </div>
@@ -751,12 +994,8 @@
                 });
             });
             
-            // Habilita/desabilita o botão de reset e as ações se for D-1 ou Hoje
-            if (isEditableDate) {
-                resetButton.disabled = false;
-            } else {
-                resetButton.disabled = true;
-            }
+            // Botão de reset é sempre habilitado (modo amplo)
+            resetButton.disabled = false;
         }
 
         /**
@@ -775,7 +1014,7 @@
             })).filter(task => {
                 const dayOfWeekKey = getDayKey(selectedDate);
                 const isScheduledForDay = task[dayOfWeekKey] === 'x';
-                const hasSpecificTime = task.horario && task.horario !== '-';
+                const hasSpecificTime = task.horario && task.horario !== '-' && task.horario.includes(':'); // Horário exato
                 return isScheduledForDay && hasSpecificTime;
             });
 
@@ -892,7 +1131,7 @@
                 // 1. Remove da lista mestra
                 rawChecklistData.splice(taskIndex, 1);
                 
-                // 2. Remove o status de conclusão para evitar lixo no localStorage
+                // 2. Remove o status de conclusão para evitar lixo no localStorage (limpa todas as datas)
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith(STORAGE_PREFIX)) {
                         const statusData = JSON.parse(localStorage.getItem(key));
@@ -918,8 +1157,8 @@
             // 1. Aplica o filtro de texto a TODAS as tarefas
             const filteredTasks = rawChecklistData.filter(task => {
                 if (filterText) {
-                    const activityMatch = task.atividade.toLowerCase().includes(filterText);
-                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText);
+                    const activityMatch = task.atividade.toLowerCase().includes(filterText.toLowerCase());
+                    const responsibleMatch = (task.responsavel || '').toLowerCase().includes(filterText.toLowerCase());
                     return activityMatch || responsibleMatch;
                 }
                 return true;
@@ -944,6 +1183,9 @@
                     case 'Quinzenal':
                         statusBadge += ' bg-indigo-100 text-indigo-800">Quinzenal</span>';
                         break;
+                    case 'Sazonal':
+                        statusBadge += ' bg-pink-100 text-pink-800">Sazonal</span>';
+                        break;
                     case 'Suspenso':
                         statusBadge += ' bg-gray-100 text-gray-800">Suspenso</span>';
                         break;
@@ -958,7 +1200,7 @@
                 }
                 
                 const horarioDisplay = task.horario && task.horario !== '-' ? 
-                    (task.status === 'Diário' || task.status === 'Semanal' ? task.horario.substring(0, 5) : task.horario) 
+                    (task.horario.includes(':') ? task.horario.substring(0, 5) : task.horario) 
                     : '-';
 
 
@@ -1138,17 +1380,16 @@
             // 0. Carrega dados mestres (permite persistência de adição/renomeação)
             loadAndInitializeData();
 
-            // 1. Calcula a data D-1 corretamente. Define a hora para meia-noite (00:00:00) para garantir consistência.
+            // 1. Calcula a data de hoje. Define a hora para meia-noite (00:00:00) para garantir consistência.
             const today = new Date();
             today.setHours(0, 0, 0, 0); // Zera o tempo de 'hoje'
             
-            const defaultDate = new Date(today);
-            defaultDate.setDate(today.getDate() - 1); // Subtrai 1 dia
+            // Inicia na data de hoje
+            selectedDate = today;
 
             // 2. Seta o valor do input (YYYY-MM-DD) e a variável de estado
-            const defaultDateISO = dateToISO(defaultDate);
+            const defaultDateISO = dateToISO(today);
             dateSelector.value = defaultDateISO;
-            selectedDate = defaultDate;
 
             // 3. Adiciona listeners de UI
             dateSelector.addEventListener('change', (e) => {
@@ -1171,7 +1412,7 @@
             addTaskButton.addEventListener('click', openAddTaskModal);
             addTaskForm.addEventListener('submit', handleAddTask);
 
-            // 4. Inicia a renderização para a data padrão (D-1)
+            // 4. Inicia a renderização para a data padrão (Hoje)
             renderAllTasks();
             renderTodayTasks();
             
@@ -1182,26 +1423,11 @@
             
             // Lógica para o botão de resetar
              resetButton.addEventListener('click', () => {
-                const todayAtMidnight = new Date();
-                todayAtMidnight.setHours(0, 0, 0, 0);
-
-                const yesterdayAtMidnight = new Date(todayAtMidnight);
-                yesterdayAtMidnight.setDate(todayAtMidnight.getDate() - 1);
-                
-                const isSelectedDateToday = dateToISO(selectedDate) === dateToISO(todayAtMidnight);
-                const isSelectedDateYesterday = dateToISO(selectedDate) === dateToISO(yesterdayAtMidnight);
-                const isEditableDate = isSelectedDateToday || isSelectedDateYesterday;
-
-
-                if (isEditableDate) {
-                    showConfirmModal(
-                        'Confirmar Reinício',
-                        `ATENÇÃO: Você deseja apagar TODOS os status de conclusão e observações salvos para ${selectedDate.toLocaleDateString('pt-BR')}? Essa ação não pode ser desfeita.`,
-                        clearCompletionStatus
-                    );
-                } else {
-                    showModal('Atenção', 'O botão Reiniciar Status da Data só está habilitado para o dia atual ou para o dia anterior (D-1), que é o período de auditoria.');
-                }
+                showConfirmModal(
+                    'Confirmar Reinício',
+                    `ATENÇÃO: Você deseja apagar TODOS os status de conclusão e observações salvos para ${selectedDate.toLocaleDateString('pt-BR')}? Essa ação não pode ser desfeita.`,
+                    clearCompletionStatus
+                );
             });
         }
 
