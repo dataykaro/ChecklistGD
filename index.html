@@ -68,6 +68,24 @@
             opacity: 0;
             transform: scale(0.95);
         }
+        /* Estilo para a aba ativa */
+        .tab-active {
+            border-color: #2563eb !important;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        /* Estilo para a lista de histórico (clickable) */
+        .history-item-content {
+            flex-grow: 1;
+            padding: 12px;
+            margin: 4px 0;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .history-item-content:hover {
+            background-color: #f3f4f6;
+        }
     </style>
 </head>
 <body>
@@ -82,83 +100,170 @@
             </p>
         </header>
         
-        <!-- Aviso de Comprovação -->
-        <div class="p-4 mb-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg" role="alert">
-            <p class="font-bold">Modo de Verificação Livre (Ampla)</p>
-            <p class="text-sm">Você pode verificar o status e salvar as informações para **qualquer data** selecionada no calendário.</p>
+        <!-- Tabs Navegação -->
+        <div class="mb-4">
+            <div id="tabButtons" class="flex border-b border-gray-200">
+                <button data-tab="verification" class="tab-button tab-active px-4 py-2 text-sm border-b-2 border-blue-600 text-blue-600 font-semibold transition duration-150">
+                    Verificação Diária
+                </button>
+                <button data-tab="history" class="tab-button px-4 py-2 text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition duration-150">
+                    Histórico de Auditoria
+                </button>
+                <button data-tab="master" class="tab-button px-4 py-2 text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition duration-150">
+                    Checklist Mestre (Gestão)
+                </button>
+            </div>
         </div>
 
-        <!-- Seção de Seleção de Data e Ações -->
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
-            <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM5 8a1 1 0 011-1h8a1 1 0 011 1v4a1 1 0 01-1 1H6a1 1 0 01-1-1V8zm5-4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd" />
-                </svg>
-                Atividades Agendadas para o dia:
-            </h2>
+        <!-- Conteúdo das Abas -->
+        <div id="tabContent">
             
-            <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
-                <input type="date" id="dateSelector" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-700 font-semibold transition duration-150">
+            <!-- ABA 1: Verificação Diária (Checklist por data) -->
+            <div id="verificationTab" class="tab-pane">
+                <div class="p-4 mb-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg" role="alert">
+                    <p class="font-bold">Verificação de Data Selecionada</p>
+                    <p class="text-sm">Os status (Concluído/Não Enviado) e a exportação são específicos para a data abaixo. Use o seletor para navegar no histórico.</p>
+                </div>
 
-                <select id="statusFilterInput" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-700 font-semibold transition duration-150">
-                    <option value="ALL">Todos os Status</option>
-                    <option value="PENDING">Aguardando Verificação</option>
-                    <option value="DONE">Verificado (Concluído)</option>
-                    <option value="MISSED">Não Enviado</option>
-                </select>
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                    <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM5 8a1 1 0 011-1h8a1 1 0 011 1v4a1 1 0 01-1 1H6a1 1 0 01-1-1V8zm5-4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Atividades Agendadas para o dia:
+                    </h2>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
+                        <input type="date" id="dateSelector" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-700 font-semibold transition duration-150">
 
-                <input type="text" id="filterInput" placeholder="Filtrar por Atividade ou Responsável..." 
-                       class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-700 font-semibold transition duration-150">
+                        <select id="statusFilterInput" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-700 font-semibold transition duration-150">
+                            <option value="ALL">Todos os Status</option>
+                            <option value="PENDING">Aguardando Verificação</option>
+                            <option value="DONE">Verificado (Concluído)</option>
+                            <option value="MISSED">Não Enviado</option>
+                        </select>
 
-                <button id="exportButton" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-150">
-                    Exportar Status (CSV)
-                </button>
-                <button id="resetButton" class="w-full sm:w-auto px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-150">
-                    Reiniciar Status da Data
-                </button>
+                        <input type="text" id="filterInput" placeholder="Filtrar por Atividade ou Responsável..." 
+                               class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-700 font-semibold transition duration-150">
+
+                        <button id="exportButton" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-150">
+                            Exportar Status (CSV)
+                        </button>
+                        <button id="resetButton" class="w-full sm:w-auto px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-150">
+                            Reiniciar Status da Data
+                        </button>
+                    </div>
+
+                    <div id="todayTasksContainer" class="timeline">
+                        <p id="loadingMessage" class="text-gray-500 italic">Carregando tarefas...</p>
+                    </div>
+                    <p id="noTasksMessage" class="text-gray-500 italic hidden">Nenhuma tarefa diária/semanal agendada para este dia.</p>
+                </div>
             </div>
 
-            <div id="todayTasksContainer" class="timeline">
-                <p id="loadingMessage" class="text-gray-500 italic">Carregando tarefas...</p>
-                <!-- Tarefas serão inseridas aqui -->
+            <!-- ABA 2: Histórico de Auditoria -->
+            <div id="historyTab" class="tab-pane hidden">
+                <div class="p-4 mb-6 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg" role="alert">
+                    <p class="font-bold">Relatórios Salvos (Histórico Local)</p>
+                    <p class="text-sm">Clique em qualquer data abaixo para carregar o status salvo daquele dia no painel de "Verificação Diária".</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <ul id="historyList" class="divide-y divide-gray-200">
+                        <li class="text-gray-500 italic p-3">Nenhum histórico de verificação encontrado.</li>
+                    </ul>
+                </div>
             </div>
-            <p id="noTasksMessage" class="text-gray-500 italic hidden">Nenhuma tarefa diária/semanal agendada para este dia.</p>
-        </div>
-        
-        <hr class="my-8">
 
-        <!-- Seção de Todas as Demandas (Checklist Completo) -->
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center justify-between">
-                <span class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.993 3.993 0 0015 11h-1a3.993 3.993 0 00-3.25 1.094A5.972 5.972 0 007 15v3h9z" />
-                    </svg>
-                    Checklist Completo (Gestão de Itens) - Total: 152 Atividades
-                </span>
-                <button id="addTaskButton" class="px-4 py-1.5 text-sm bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                    Adicionar Nova Tarefa
-                </button>
-            </h2>
-            <div class="responsive-table">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periodicidade</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário/Prazo</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsável</th>
-                            <th scope="col" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="allTasksBody" class="bg-white divide-y divide-gray-200">
-                        <!-- Todas as tarefas serão inseridas aqui -->
-                    </tbody>
-                </table>
+            <!-- ABA 3: Checklist Mestre (Gestão) -->
+            <div id="masterTab" class="tab-pane hidden">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center justify-between">
+                        <span class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.993 3.993 0 0015 11h-1a3.993 3.993 0 00-3.25 1.094A5.972 5.972 0 007 15v3h9z" />
+                            </svg>
+                            Checklist Completo (Gestão de Itens) - Total: <span id="masterCount">152</span> Atividades
+                        </span>
+                        <button id="addTaskButton" class="px-4 py-1.5 text-sm bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                            Adicionar Nova Tarefa
+                        </button>
+                    </h2>
+                    <div class="responsive-table">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periodicidade</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário/Prazo</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsável</th>
+                                    <th scope="col" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allTasksBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Todas as tarefas serão inseridas aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
+        </div> <!-- Fim de tabContent -->
+    </div>
+
+    <!-- Modal de Edição de Tarefa Mestra (Novo) -->
+    <div id="editTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Editar Atividade Mestra</h3>
+            <form id="editTaskForm" class="space-y-4">
+                <input type="hidden" id="editPkId">
+                <div>
+                    <label for="editActivity" class="block text-sm font-medium text-gray-700">Atividade</label>
+                    <input type="text" id="editActivity" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div>
+                    <label for="editStatus" class="block text-sm font-medium text-gray-700">Periodicidade</label>
+                    <select id="editStatus" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        <option value="Diário">Diário</option>
+                        <option value="Semanal">Semanal</option>
+                        <option value="Quinzenal">Quinzenal</option>
+                        <option value="Mensal">Mensal</option>
+                        <option value="Por Demanda">Por Demanda</option>
+                        <option value="Suspenso">Suspenso</option>
+                        <option value="Prisma">Prisma</option>
+                        <option value="Prisma/Projeto">Prisma/Projeto</option>
+                        <option value="Sazonal">Sazonal</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="editResponsavel" class="block text-sm font-medium text-gray-700">Responsável</label>
+                    <input type="text" id="editResponsavel" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div>
+                    <label for="editHorario" class="block text-sm font-medium text-gray-700">Horário/Prazo (Ex: 09:00:00 ou 1º dia útil)</label>
+                    <input type="text" id="editHorario" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-700">Dias Agendados (marque 'x'):</p>
+                    <div id="editDaysContainer" class="flex flex-wrap gap-2">
+                        <!-- Checkboxes serão inseridas aqui -->
+                        <label class="inline-flex items-center"><input type="checkbox" id="editSeg" class="form-checkbox text-blue-600 mr-1"> Seg</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="editTer" class="form-checkbox text-blue-600 mr-1"> Ter</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="editQua" class="form-checkbox text-blue-600 mr-1"> Qua</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="editQui" class="form-checkbox text-blue-600 mr-1"> Qui</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="editSex" class="form-checkbox text-blue-600 mr-1"> Sex</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="editSab" class="form-checkbox text-blue-600 mr-1"> Sáb</label>
+                        <label class="inline-flex items-center"><input type="checkbox" id="editDom" class="form-checkbox text-blue-600 mr-1"> Dom</label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="closeEditTaskModal()" class="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600">Salvar Alterações</button>
+                </div>
+            </form>
         </div>
     </div>
+
 
     <!-- Modal de Adição de Nova Tarefa -->
     <div id="addTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
@@ -257,6 +362,9 @@
         const addTaskButton = document.getElementById('addTaskButton');
         const addTaskModal = document.getElementById('addTaskModal');
         const addTaskForm = document.getElementById('addTaskForm');
+        const masterCountDisplay = document.getElementById('masterCount');
+        const editTaskModal = document.getElementById('editTaskModal');
+        const editTaskForm = document.getElementById('editTaskForm');
 
 
         let filterText = ''; // Variável para armazenar o texto de filtro
@@ -404,132 +512,6 @@
             { atividade: "Relatório de Transferência", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
             { atividade: "Relatório de Produção - Canal Virtual", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Produção - Backoffice", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - Call Center", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - SAC", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - Unidades de Atendimento", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Histórico de vidas", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Carteira Individual", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Histórico de Empresas e Vidas Pjotinha", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Absenteísmo (Mensal)", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "RR da Gerência", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Campanha", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
-            { atividade: "Base de mailing - Call Back SAC - 14:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Francisco Alves" },
-            { atividade: "Base de mailing - Reclamação Site e Aplicativo - Tarde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Francisco Alves" },
-            { atividade: "Base de mailing - Fale Conosco/Chat - Tarde", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Francisco Alves" },
-            { atividade: "PDI - Base de PDI - 16:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "16:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "Extrato de Autorização de Procedimentos - Final do Dia", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "17:00:00", responsavel: "Francisco Alves" },
-            { atividade: "Apresentações Avulsas", status: "Por Demanda", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório Avaliação 90º", status: "Suspenso", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Absenteísmo (Mensal) - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 13:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "13:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 17:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "17:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 11:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "11:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL SÃO GONÇALO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL DEL CASTILHO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL CABO FRIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM CENTRO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL DUQUE DE CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL BARRETO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL NITERÓI 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL GUARATIBA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM ILHA DO GOVERNADOR 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL RECREIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM NOVA IGUAÇU 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM CAMPO GRANDE 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM VILA VALQUEIRE 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM BOTAFOGO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - HOSPITAL ASSIM SÃO CRISTÓVÃO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - HOSPITAL MEMORIAL SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM BONSUCESSO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL MARICÁ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL VOLTA REDONDA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL NITERÓI 4", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM MADUREIRA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM CENTRO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL DUQUE DE CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL BARRETO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL GUARATIBA 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - ASSIM ILHA DO GOVERNADOR 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL RECREIO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Controle de Agendas Canceladas - MEMORIAL SÃO GONÇALO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL SÃO GONÇALO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL DEL CASTILHO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL CABO FRIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM CENTRO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL DUQUE DE CAXIAS 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL BARRETO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL NITERÓI 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL GUARATIBA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM ILHA DO GOVERNADOR 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL RECREIO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM NOVA IGUAÇU 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM CAMPO GRANDE 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM VILA VALQUEIRE 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM BOTAFOGO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - HOSPITAL ASSIM SÃO CRISTÓVÃO 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - HOSPITAL MEMORIAL SANTA CRUZ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM BONSUCESSO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL MARICÁ 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL VOLTA REDONDA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL NITERÓI 4", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM MADUREIRA 2", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM CENTRO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL DUQUE DE CAXIAS 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL BARRETO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL GUARATIBA 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - ASSIM ILHA DO GOVERNADOR 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL RECREIO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "Não Agendamento - MEMORIAL SÃO GONÇALO 3", status: "Semanal", Seg: "", Ter: "x", Qua: "", Qui: "", Sex: "", horario: "10:00:00", responsavel: "Paulo Lima" },
-            { atividade: "PDI - Base de PDI - 12:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "12:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 14:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "14:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 15:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "15:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 16:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "16:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 18:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "18:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 19:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "19:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 20:00h", status: "Diário", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "20:00:00", responsavel: "Jania Cordeiro" },
-            { atividade: "Controle de Pessoal - 2", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
-            { atividade: "Acompanhamento de Agendas - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
-            { atividade: "Abertura de Chamados - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
-            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
-            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde - 2", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
-            { atividade: "Relatório de direcionamento de Vendas - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Mídias - Assim Saúde Vendas - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório de Mídias - Rede Memorial Vendas - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Autorização de Procedimentos e Envio de Pedido Médico - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Transferência - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório de Produção - Canal Virtual - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - Backoffice - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - Call Center - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - SAC - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - Unidades de Atendimento - 2", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Histórico de vidas - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Carteira Individual - 2", status: "Sazonal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "2º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Histórico de Empresas e Vidas Pjotinha - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "3º dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Relatório de Absenteísmo (Mensal) - 3", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "RR da Gerência - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "Último dia útil", responsavel: "Jania Cordeiro" },
-            { atividade: "Campanha - 2", status: "Mensal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório Bom Dia Unidades Grupo Memorial - 2", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Arnaldo Junior" },
-            { atividade: "Bom Dia Rede Memorial - 2", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Paulo Lima" },
-            { atividade: "PDI - Base de PDI - 2", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
-            { atividade: "PDI - Base de PDI - 3", status: "Diário", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Jania Cordeiro" },
-            { atividade: "Controle de Pessoal - 3", status: "Prisma/Projeto", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "-", responsavel: "Rafael Hortis" },
-            { atividade: "Acompanhamento de Agendas - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
-            { atividade: "Abertura de Chamados - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Rafael Hortis" },
-            { atividade: "Sistema de Monitoria da Qualidade - Rede Memorial - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
-            { atividade: "Sistema de Monitoria da Qualidade - Assim Saúde - 3", status: "Prisma", Seg: "x", Ter: "x", Qua: "x", Qui: "x", Sex: "x", horario: "-", responsavel: "Harley Carvalho" },
-            { atividade: "Relatório de direcionamento de Vendas - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Mídias - Assim Saúde Vendas - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório de Mídias - Rede Memorial Vendas - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Autorização de Procedimentos e Envio de Pedido Médico - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Transferência - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Arnaldo Junior" },
-            { atividade: "Relatório de Produção - Canal Virtual - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
-            { atividade: "Relatório de Produção - Backoffice - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Produção - Call Center - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Produção - SAC - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
             { atividade: "Relatório de Produção - Unidades de Atendimento - 3", status: "Quinzenal", Seg: "", Ter: "", Qua: "", Qui: "", Sex: "", horario: "1º e 16º dia útil", responsavel: "Francisco Alves" },
@@ -646,6 +628,8 @@
             localStorage.setItem(MASTER_DATA_KEY, JSON.stringify(rawChecklistData));
             renderAllTasks();
             renderTodayTasks();
+            loadAndRenderAuditHistory(); // Atualiza o histórico sempre que a lista muda
+            masterCountDisplay.textContent = rawChecklistData.length;
         }
 
         /**
@@ -671,7 +655,10 @@
                 }
                 return task;
             });
-            saveChecklistData();
+            
+            // Força o salvamento inicial para ter a PK e a lista completa no localStorage
+            localStorage.setItem(MASTER_DATA_KEY, JSON.stringify(rawChecklistData));
+            masterCountDisplay.textContent = rawChecklistData.length;
         }
 
 
@@ -728,6 +715,7 @@
             localStorage.removeItem(key);
             completionStatus = {};
             renderTodayTasks(); 
+            loadAndRenderAuditHistory(); // Atualiza o histórico
             showModal('Sucesso', 'Status de verificação da data reiniciado com sucesso!');
         }
 
@@ -735,8 +723,7 @@
          * Salva o status de conclusão no LocalStorage para a data selecionada.
          */
         function saveCompletionStatus(taskId, status, deadline, observationText = '') {
-            // REMOÇÃO DA RESTRIÇÃO DE DATA: A edição é sempre permitida para a data selecionada.
-            const now = new Date(); // Usa a hora atual para o registro
+            const now = new Date(); 
             
             if (status === STATUS_DONE || status === STATUS_MISSED) {
                 completionStatus[taskId] = { 
@@ -753,6 +740,7 @@
             const key = getStorageKey(selectedDate);
             localStorage.setItem(key, JSON.stringify(completionStatus));
             renderTodayTasks(); // Rerenderiza para atualizar o card
+            loadAndRenderAuditHistory(); // Atualiza o histórico
         }
 
         /**
@@ -817,9 +805,6 @@
             const tasks = getTodayTasks();
             const dayOfWeekKey = getDayKey(selectedDate);
             
-            // LÓGICA DE EDIÇÃO AMPLA: Sempre habilitada.
-            const isDisabled = false; 
-
             loadingMessage.classList.add('hidden');
             todayTasksContainer.innerHTML = '';
             exportButton.disabled = tasks.length === 0;
@@ -832,13 +817,12 @@
                 year: 'numeric' 
             });
             
-            // Não mostra a hora atual para evitar confusão no modo de verificação ampla
             currentDateDisplay.textContent = dateStr;
 
 
             if (tasks.length === 0) {
                 noTasksMessage.classList.remove('hidden');
-                resetButton.disabled = false; // Sempre habilitado no modo livre
+                resetButton.disabled = false; // Sempre habilitado
                 return;
             } else {
                 noTasksMessage.classList.add('hidden');
@@ -875,7 +859,7 @@
                     timeTextClass = 'text-gray-700';
                     cardClass = 'bg-blue-50/70 border-blue-200';
                     statusText = 'AGUARDANDO VERIFICAÇÃO';
-                    verificationText = ' '; // Espaço para evitar Cumulative Layout Shift
+                    verificationText = ' '; 
                 }
                 
                 // Lógica de Prazo
@@ -899,8 +883,7 @@
                 const currentObservation = taskStatus.observation || '';
                 const isFinalStatus = status === STATUS_DONE || status === STATUS_MISSED;
                 
-                // Input de observação
-                const disabledAttr = isDisabled ? 'disabled' : '';
+                const disabledAttr = '';
                 
                 if (isFinalStatus) {
                     // Exibe o status e a observação registrada
@@ -909,14 +892,14 @@
                         <p class="text-sm text-gray-800 break-words max-w-full">${currentObservation || 'Nenhuma registrada.'}</p>
                     `;
                 } else {
-                    // Input de observação para edição (sempre habilitado no modo amplo)
+                    // Input de observação para edição (sempre habilitado)
                     actionAreaHTML = `<input type="text" id="observation-input-${task.id}" value="${currentObservation}" placeholder="Assunto/ID ou Motivo da Falha (Obrigatório se Não Enviado)" class="observation-input mb-2 p-2 text-sm border border-gray-300 rounded-lg w-full focus:ring-blue-500 focus:border-blue-500" ${disabledAttr}>`;
                 }
 
                 // Botões de Ação
                 let actionButtonsHTML = '';
                 if (isFinalStatus) {
-                    // Botão para resetar o status (sempre habilitado no modo amplo)
+                    // Botão para resetar o status (sempre habilitado)
                     actionButtonsHTML = `
                         <button data-task-id="${task.id}" data-action="${STATUS_PENDING}" 
                                 class="action-btn w-full lg:w-auto px-4 py-2 text-sm font-semibold rounded-full transition duration-150 bg-gray-400 hover:bg-gray-500 text-white shadow-lg">
@@ -924,7 +907,7 @@
                         </button>
                     `;
                 } else {
-                    // Botões para marcar como CONCLUÍDO ou NÃO ENVIADO (sempre habilitado no modo amplo)
+                    // Botões para marcar como CONCLUÍDO ou NÃO ENVIADO (sempre habilitado)
                     actionButtonsHTML = `
                         <div class="flex flex-col sm:flex-row gap-2 w-full">
                             <button data-task-id="${task.id}" data-action="${STATUS_DONE}" 
@@ -997,6 +980,135 @@
             // Botão de reset é sempre habilitado (modo amplo)
             resetButton.disabled = false;
         }
+
+        /**
+         * FUNÇÃO NOVA: Carrega as datas que possuem status salvos no localStorage.
+         */
+        function loadAuditHistory() {
+            const history = [];
+            
+            // 1. Escaneia todas as chaves no localStorage
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith(STORAGE_PREFIX)) {
+                    const dateISO = key.substring(STORAGE_PREFIX.length + 1);
+                    
+                    try {
+                        const statusData = JSON.parse(localStorage.getItem(key));
+                        
+                        let doneCount = 0;
+                        let missedCount = 0;
+
+                        // Pega a data para saber o dia da semana
+                        const tempDate = new Date(dateISO + 'T00:00:00');
+                        const dayKey = getDayKey(tempDate);
+                        
+                        // Filtra as tarefas que DEVEM ser agendadas para este dia (baseado na lista mestra)
+                        const relevantTasks = rawChecklistData.filter(task => 
+                            task[dayKey] === 'x' && task.horario && task.horario !== '-' && task.horario.includes(':')
+                        );
+                        
+                        const totalCount = relevantTasks.length;
+                        
+                        // Se não houver tarefas agendadas e não houver status salvo, ignora a chave
+                        if (totalCount === 0 && Object.keys(statusData).length === 0) {
+                            return;
+                        }
+
+                        // Calcula os status salvos
+                        relevantTasks.forEach(task => {
+                            const taskId = getTaskId(task);
+                            if (statusData[taskId]) {
+                                if (statusData[taskId].status === STATUS_DONE) {
+                                    doneCount++;
+                                } else if (statusData[taskId].status === STATUS_MISSED) {
+                                    missedCount++;
+                                }
+                            }
+                        });
+
+                        // Calcula as pendências
+                        const pendingCount = totalCount - doneCount - missedCount;
+                        
+                        history.push({
+                            dateISO: dateISO,
+                            date: tempDate,
+                            done: doneCount,
+                            missed: missedCount,
+                            total: totalCount,
+                            pending: pendingCount
+                        });
+
+                    } catch (e) {
+                        console.error(`Erro ao processar chave ${key}`, e);
+                    }
+                }
+            });
+
+            // 2. Ordena da data mais recente para a mais antiga
+            history.sort((a, b) => new Date(b.date) - new Date(a.date));
+            return history;
+        }
+
+        /**
+         * FUNÇÃO NOVA: Renderiza a lista de histórico na aba 'Histórico de Auditoria'.
+         */
+        function loadAndRenderAuditHistory() {
+            const historyList = document.getElementById('historyList');
+            const historyData = loadAuditHistory();
+            historyList.innerHTML = '';
+
+            if (historyData.length === 0) {
+                historyList.innerHTML = '<li class="text-gray-500 italic p-3">Nenhum histórico de verificação encontrado.</li>';
+                return;
+            }
+
+            historyData.forEach(item => {
+                const dateStr = item.date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                const isToday = dateToISO(item.date) === dateToISO(new Date());
+                const badgeText = isToday ? 'HOJE' : '';
+
+                const listItem = document.createElement('li');
+                listItem.className = 'flex justify-between items-center p-0';
+                listItem.dataset.date = item.dateISO;
+                
+                let doneBadge = item.done > 0 ? `<span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">V: ${item.done}</span>` : '';
+                let missedBadge = item.missed > 0 ? `<span class="bg-orange-100 text-orange-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">F: ${item.missed}</span>` : '';
+                let pendingBadge = item.pending > 0 ? `<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">P: ${item.pending}</span>` : '';
+                
+                if (item.total === 0) {
+                     pendingBadge = `<span class="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">Nenhuma agendada</span>`;
+                }
+
+                // Conteúdo clicável
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'history-item-content flex justify-between items-center w-full';
+                contentDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="font-semibold text-gray-800 text-lg">${dateStr}</span>
+                        ${badgeText ? `<span class="ml-2 px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded-full">${badgeText}</span>` : ''}
+                    </div>
+                    <div class="flex items-center text-sm text-gray-500">
+                        ${doneBadge}
+                        ${missedBadge}
+                        ${pendingBadge}
+                        <span class="ml-3 text-gray-900 font-semibold hidden sm:inline">Total: ${item.total}</span>
+                    </div>
+                `;
+
+                contentDiv.addEventListener('click', () => {
+                    // Carrega a data no seletor e volta para a aba de verificação
+                    dateSelector.value = item.dateISO;
+                    const newDate = new Date(item.dateISO + 'T00:00:00');
+                    selectedDate = newDate;
+                    renderTodayTasks();
+                    switchTab('verification');
+                });
+                
+                listItem.appendChild(contentDiv);
+                historyList.appendChild(listItem);
+            });
+        }
+
 
         /**
          * Exporta o status atual das tarefas de hoje para um arquivo CSV.
@@ -1215,7 +1327,7 @@
                     <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${task.responsavel || '-'}</td>
                     <td class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium flex justify-end space-x-2">
                         <!-- Botão de Edição (Renomear) -->
-                        <button data-pk-id="${task.pkId}" class="edit-btn text-blue-600 hover:text-blue-900" title="Renomear Atividade">
+                        <button data-pk-id="${task.pkId}" class="edit-master-btn text-blue-600 hover:text-blue-900" title="Editar Atividade Completa">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
@@ -1231,14 +1343,11 @@
                 allTasksBody.appendChild(row);
             });
             
-            // Adiciona listeners para edição da Atividade
-            document.querySelectorAll('.edit-btn').forEach(button => {
+            // Adiciona listeners para Edição COMPLETA da Atividade
+            document.querySelectorAll('.edit-master-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const pkId = e.currentTarget.dataset.pkId;
-                    const spanElement = document.getElementById(`atividade-${pkId}`);
-                    if (spanElement) {
-                        startRename(spanElement);
-                    }
+                    openEditTaskModal(pkId);
                 });
             });
 
@@ -1257,73 +1366,96 @@
             });
         }
         
-        /**
-         * Inicia o processo de renomeação de uma atividade.
-         */
-        function startRename(spanElement) {
-            const pkId = spanElement.dataset.pkId;
-            const originalText = spanElement.textContent.trim();
-            
-            // Cria um input para edição
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'w-full border border-blue-400 p-1 text-sm font-medium rounded-md';
-            input.value = originalText;
-            
-            // Substitui o span pelo input
-            spanElement.replaceWith(input);
-            input.focus();
-            
-            // Listener para salvar ao perder o foco (blur) ou pressionar Enter
-            const saveRename = () => {
-                const newActivity = input.value.trim();
-                
-                if (newActivity !== originalText && newActivity !== '') {
-                    // Encontra a tarefa pelo ID único
-                    const taskIndex = rawChecklistData.findIndex(t => t.pkId === pkId);
-                    
-                    if (taskIndex > -1) {
-                        const originalTask = rawChecklistData[taskIndex];
-                        const oldTaskId = getTaskId(originalTask);
+        // --- Funções do Modal de Edição Mestra ---
 
-                        // Renomeia
-                        rawChecklistData[taskIndex].atividade = newActivity;
-                        // O saveChecklistData() chama renderAllTasks() e renderTodayTasks()
-                        saveChecklistData();
-                        
-                        // NOTA DE AVISO: Renomear limpa o status de conclusão
-                        if (completionStatus[oldTaskId]) {
-                            // Limpa status para a nova atividade (ID mudou)
-                            delete completionStatus[oldTaskId];
-                            showModal('Sucesso e Aviso', 'Tarefa renomeada com sucesso! Um aviso: o status de verificação anterior para esta tarefa foi removido, pois a identificação do item (Task ID) foi alterada.');
-                        } else {
-                            showModal('Sucesso', 'Tarefa renomeada com sucesso.');
-                        }
-                        
-                    }
-                } else {
-                    // Se o texto for vazio ou igual ao original, apenas retorna o span original
-                    input.replaceWith(spanElement);
+        function openEditTaskModal(pkId) {
+            const task = rawChecklistData.find(t => t.pkId === pkId);
+            if (!task) return;
+
+            document.getElementById('editPkId').value = pkId;
+            document.getElementById('editActivity').value = task.atividade;
+            document.getElementById('editStatus').value = task.status;
+            document.getElementById('editResponsavel').value = task.responsavel;
+            document.getElementById('editHorario').value = task.horario;
+
+            // Preenche os checkboxes dos dias agendados
+            ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].forEach(day => {
+                const checkbox = document.getElementById(`edit${day}`);
+                if (checkbox) {
+                    checkbox.checked = task[day] === 'x';
                 }
-                
-                // Limpa listeners para evitar duplicação e garante o re-render
-                input.removeEventListener('blur', saveRename);
-                input.removeEventListener('keypress', handleKey);
-                renderAllTasks(); // Garante que o item editado volte a ser um span
-            };
+            });
 
-            const handleKey = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    saveRename();
-                }
-            };
-
-            input.addEventListener('blur', saveRename);
-            input.addEventListener('keypress', handleKey);
+            editTaskModal.classList.remove('hidden');
         }
 
-        // --- Funções do Modal de Adição ---
+        function closeEditTaskModal() {
+            editTaskModal.classList.add('hidden');
+            editTaskForm.reset();
+        }
+
+        function handleEditTask(e) {
+            e.preventDefault();
+            
+            const pkId = document.getElementById('editPkId').value;
+            const taskIndex = rawChecklistData.findIndex(t => t.pkId === pkId);
+            
+            if (taskIndex === -1) {
+                showModal('Erro', 'Tarefa não encontrada para edição.');
+                return;
+            }
+
+            const originalTask = rawChecklistData[taskIndex];
+            const oldTaskId = getTaskId(originalTask);
+
+            // 1. Coleta os novos dados
+            const newActivity = document.getElementById('editActivity').value.trim();
+            const newStatus = document.getElementById('editStatus').value;
+            const newResponsavel = document.getElementById('editResponsavel').value.trim();
+            const newHorario = document.getElementById('editHorario').value.trim();
+            
+            // Coleta os novos dias da semana
+            const newDays = {};
+            ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].forEach(day => {
+                newDays[day] = document.getElementById(`edit${day}`).checked ? 'x' : '';
+            });
+
+            // 2. Atualiza a tarefa
+            rawChecklistData[taskIndex].atividade = newActivity;
+            rawChecklistData[taskIndex].status = newStatus;
+            rawChecklistData[taskIndex].responsavel = newResponsavel;
+            rawChecklistData[taskIndex].horario = newHorario;
+            Object.assign(rawChecklistData[taskIndex], newDays);
+            
+            // 3. Verifica se o ID de rastreamento mudou (atividade ou horário)
+            const newTaskId = getTaskId(rawChecklistData[taskIndex]);
+            
+            saveChecklistData();
+            
+            // 4. Limpa o status se a chave mudou (para evitar conflitos de ID)
+            if (oldTaskId !== newTaskId) {
+                 // Remove o status anterior se o ID (nome + horário) mudou
+                 Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(STORAGE_PREFIX)) {
+                        const statusData = JSON.parse(localStorage.getItem(key));
+                        if (statusData[oldTaskId]) {
+                            delete statusData[oldTaskId];
+                            localStorage.setItem(key, JSON.stringify(statusData));
+                        }
+                    }
+                });
+                 
+                showModal('Sucesso e Aviso', 'Alterações salvas! Um aviso: o status de verificação anterior para esta tarefa foi removido em todo o histórico, pois o nome/horário foi alterado.');
+            } else {
+                 showModal('Sucesso', 'Alterações salvas com sucesso!');
+            }
+            
+            closeEditTaskModal();
+        }
+        
+        editTaskForm.addEventListener('submit', handleEditTask);
+
+        // --- Funções do Modal de Adição (Mantidas) ---
 
         function openAddTaskModal() {
             addTaskModal.classList.remove('hidden');
@@ -1374,6 +1506,32 @@
             showModal('Sucesso', 'Nova tarefa adicionada com sucesso!');
         }
 
+        // --- Funções de Navegação por Abas ---
+
+        function switchTab(tabId) {
+            // Esconde todos os painéis e remove o estilo ativo
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('tab-active', 'border-blue-600', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            // Mostra o painel correto e adiciona o estilo ativo ao botão
+            const targetPane = document.getElementById(tabId + 'Tab');
+            if (targetPane) {
+                targetPane.classList.remove('hidden');
+                document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('tab-active', 'border-blue-600', 'text-blue-600');
+                document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-gray-500');
+            }
+            
+            // Ações específicas ao mudar de aba
+            if (tabId === 'history') {
+                loadAndRenderAuditHistory();
+            } else if (tabId === 'verification') {
+                renderTodayTasks();
+            }
+        }
+        
         // --- Inicialização e Loop de Atualização ---
         
         function initializeApp() {
@@ -1393,6 +1551,7 @@
 
             // 3. Adiciona listeners de UI
             dateSelector.addEventListener('change', (e) => {
+                // Cria um novo objeto Date a partir do valor do seletor + fuso horário zerado
                 const newDate = new Date(e.target.value + 'T00:00:00'); 
                 selectedDate = newDate;
                 renderTodayTasks();
@@ -1409,26 +1568,34 @@
                 renderTodayTasks(); 
             });
             
-            addTaskButton.addEventListener('click', openAddTaskModal);
             addTaskForm.addEventListener('submit', handleAddTask);
-
-            // 4. Inicia a renderização para a data padrão (Hoje)
-            renderAllTasks();
-            renderTodayTasks();
-            
-            // 5. Atualiza o painel a cada minuto, para atualizar a hora (se for o dia atual)
-            setInterval(renderTodayTasks, 60000); 
-            
             exportButton.addEventListener('click', exportToCSV);
             
             // Lógica para o botão de resetar
-             resetButton.addEventListener('click', () => {
+            resetButton.addEventListener('click', () => {
                 showConfirmModal(
                     'Confirmar Reinício',
                     `ATENÇÃO: Você deseja apagar TODOS os status de conclusão e observações salvos para ${selectedDate.toLocaleDateString('pt-BR')}? Essa ação não pode ser desfeita.`,
                     clearCompletionStatus
                 );
             });
+
+            // Lógica de Navegação por Abas
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    switchTab(button.dataset.tab);
+                });
+            });
+
+            // 4. Inicia a renderização na aba padrão (Verificação Diária)
+            renderAllTasks();
+            renderTodayTasks();
+            
+            // 5. Atualiza o painel a cada minuto
+            setInterval(renderTodayTasks, 60000); 
+            
+            // Botoes Adicionar/Editar
+            addTaskButton.addEventListener('click', openAddTaskModal);
         }
 
         window.onload = initializeApp;
