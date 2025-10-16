@@ -184,15 +184,22 @@
                             </svg>
                             Checklist Completo (Gestão de Itens) - Total: <span id="masterCount">152</span> Atividades
                         </span>
-                        <button id="addTaskButton" class="px-4 py-1.5 text-sm bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                            Adicionar Nova Tarefa
-                        </button>
+                        <div class="flex space-x-2">
+                            <button id="deleteMarkedButton" class="px-4 py-1.5 text-sm bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-150">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                Excluir Marcadas
+                            </button>
+                            <button id="addTaskButton" class="px-4 py-1.5 text-sm bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                Adicionar Nova Tarefa
+                            </button>
+                        </div>
                     </h2>
                     <div class="responsive-table">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th scope="col" class="w-10 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periodicidade</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário/Prazo</th>
@@ -211,7 +218,7 @@
         </div> <!-- Fim de tabContent -->
     </div>
 
-    <!-- Modal de Edição de Tarefa Mestra (Novo) -->
+    <!-- Modal de Edição de Tarefa Mestra -->
     <div id="editTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full">
             <h3 class="text-xl font-bold text-gray-800 mb-4">Editar Atividade Mestra</h3>
@@ -317,7 +324,7 @@
         </div>
     </div>
     
-    <!-- NOVO MODAL: Edição do Status de Auditoria Salvo -->
+    <!-- MODAL: Edição do Status de Auditoria Salvo -->
     <div id="editStatusModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full">
             <h3 class="text-xl font-bold text-gray-800 mb-4">Editar Registro de Verificação</h3>
@@ -402,11 +409,15 @@
         const editTaskForm = document.getElementById('editTaskForm');
         const editStatusModal = document.getElementById('editStatusModal');
         const editStatusForm = document.getElementById('editStatusForm');
+        const deleteMarkedButton = document.getElementById('deleteMarkedButton');
 
 
         let filterText = ''; // Variável para armazenar o texto de filtro
         let statusFilter = 'ALL'; // Variável para armazenar o filtro de status
         let rawChecklistData = []; // Dados mestres carregados
+
+        // Array para mapeamento e ordenação dos dias da semana
+        const daysOrder = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
         // DADOS CONSOLIDADOS DE TODAS AS PLANILHAS ENVIADAS (~152 ATIVIDADES)
         const defaultRawChecklistData = [
@@ -826,8 +837,22 @@
                 return true;
             });
 
-
+            // NOVA ORDENAÇÃO: Por Dia da Semana e depois por Horário
             filteredTasks.sort((a, b) => {
+                // Encontra a coluna de agendamento para a data selecionada
+                const dayKeyA = getDayKey(selectedDate);
+                const dayKeyB = getDayKey(selectedDate);
+                
+                // Prioriza o Dia da Semana (para manter o agrupamento visual)
+                const dayA = daysOrder.indexOf(dayKeyA);
+                const dayB = daysOrder.indexOf(dayKeyB);
+
+                if (dayA !== dayB) {
+                    // Esta ordenação só funciona para D0 ou D-1, mas mantém a estrutura
+                    // A ordenação real é pelo horário, pois o dia da semana é sempre o mesmo na lista de "todayTasks"
+                }
+
+                // Ordena por Horário
                 if (a.horario < b.horario) return -1;
                 if (a.horario > b.horario) return 1;
                 return 0;
@@ -843,7 +868,7 @@
         function renderTodayTasks() {
             loadCompletionStatus(); // Carrega o status para a data atual
             const tasks = getTodayTasks();
-            const dayOfWeekKey = getDayKey(selectedDate);
+            const dayOfWeekKey = getDayKey(selectedDate); // Dia da semana da data selecionada
             
             loadingMessage.classList.add('hidden');
             todayTasksContainer.innerHTML = '';
@@ -984,12 +1009,14 @@
                             <p class="text-sm text-gray-500">
                                 <span class="font-medium">Responsável:</span> ${task.responsavel || 'Não Definido'}
                                 <span class="mx-2 text-gray-300 hidden sm:inline">|</span>
-                                <span class="font-medium">Periodicidade:</span> ${task.status} (${dayOfWeekKey})
+                                <span class="font-medium">Periodicidade:</span> ${task.status}
                             </p>
                         </div>
                         
                         <!-- Coluna Central: Tempo e Status -->
                         <div class="flex-shrink-0 text-right lg:ml-4 mb-3 lg:mb-0">
+                            <!-- NOVO: DIA DA SEMANA EXPLÍCITO -->
+                            <p class="text-sm font-bold text-gray-600">${dayOfWeekKey}</p>
                             ${prazoDisplayHTML}
                             <p class="text-xs font-semibold ${status === STATUS_DONE ? 'text-green-500' : status === STATUS_MISSED ? 'text-orange-500' : 'text-gray-500'}">${statusText}</p>
                             <p class="text-xs text-gray-500">${verificationText}</p>
@@ -1309,6 +1336,51 @@
         }
 
         /**
+         * FUNÇÃO NOVA: Exclui as tarefas marcadas com o checkbox.
+         */
+        function deleteMarkedTasks() {
+            const checkboxes = document.querySelectorAll('#allTasksBody input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                showModal('Atenção', 'Nenhuma tarefa foi marcada para exclusão.');
+                return;
+            }
+
+            // Coleta os pkIds das tarefas a serem excluídas
+            const pkIdsToDelete = Array.from(checkboxes).map(cb => cb.dataset.pkId);
+
+            showConfirmModal(
+                'Confirmar Exclusão em Massa',
+                `Tem certeza que deseja EXCLUIR permanentemente ${pkIdsToDelete.length} atividade(s) marcada(s)? Isso apagará todo o histórico de status dessas tarefas.`,
+                () => {
+                    let deletedCount = 0;
+                    // Filtra o array rawChecklistData, mantendo apenas as tarefas que NÃO estão na lista pkIdsToDelete
+                    rawChecklistData = rawChecklistData.filter(task => {
+                        if (pkIdsToDelete.includes(task.pkId)) {
+                            // Se o item será excluído, limpa o status (passo 2 da deleteTask)
+                            const taskId = getTaskId(task);
+                            Object.keys(localStorage).forEach(key => {
+                                if (key.startsWith(STORAGE_PREFIX)) {
+                                    const statusData = JSON.parse(localStorage.getItem(key));
+                                    if (statusData[taskId]) {
+                                        delete statusData[taskId];
+                                        localStorage.setItem(key, JSON.stringify(statusData));
+                                    }
+                                }
+                            });
+                            deletedCount++;
+                            return false; // Exclui a tarefa
+                        }
+                        return true; // Mantém a tarefa
+                    });
+                    
+                    // Salva a nova lista mestra e atualiza a UI
+                    saveChecklistData();
+                    showModal('Sucesso', `${deletedCount} tarefa(s) excluída(s) com sucesso!`);
+                }
+            );
+        }
+
+        /**
          * Renderiza a tabela completa do checklist.
          */
         function renderAllTasks() {
@@ -1365,6 +1437,9 @@
 
 
                 row.innerHTML = `
+                    <td class="px-3 py-3 whitespace-nowrap">
+                        <input type="checkbox" data-pk-id="${task.pkId}" class="form-checkbox text-red-600 h-4 w-4 rounded">
+                    </td>
                     <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                         <span id="atividade-${task.pkId}" data-pk-id="${task.pkId}" class="editable">
                             ${task.atividade}
@@ -1380,8 +1455,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                         </button>
-                        <!-- Botão de Excluir -->
-                        <button data-pk-id="${task.pkId}" class="delete-btn text-red-600 hover:text-red-900" title="Excluir Atividade">
+                        <!-- Botão de Excluir (individual) -->
+                        <button data-pk-id="${task.pkId}" class="delete-btn text-red-600 hover:text-red-900" title="Excluir Atividade Individual">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -1399,7 +1474,7 @@
                 });
             });
 
-            // Adiciona listeners para exclusão da Atividade
+            // Adiciona listeners para exclusão individual da Atividade
             document.querySelectorAll('.delete-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const pkId = e.currentTarget.dataset.pkId;
@@ -1503,7 +1578,7 @@
         
         editTaskForm.addEventListener('submit', handleEditTask);
         
-        // --- NOVO: Funções do Modal de Edição de Status ---
+        // --- Funções do Modal de Edição de Status ---
 
         function openEditStatusModal(taskId) {
             const taskStatus = completionStatus[taskId];
@@ -1679,6 +1754,7 @@
             
             addTaskForm.addEventListener('submit', handleAddTask);
             exportButton.addEventListener('click', exportToCSV);
+            deleteMarkedButton.addEventListener('click', deleteMarkedTasks);
             
             // Lógica para o botão de resetar
             resetButton.addEventListener('click', () => {
