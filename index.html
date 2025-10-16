@@ -316,6 +316,41 @@
             </form>
         </div>
     </div>
+    
+    <!-- NOVO MODAL: Edição do Status de Auditoria Salvo -->
+    <div id="editStatusModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Editar Registro de Verificação</h3>
+            <p id="editStatusTaskName" class="text-gray-700 mb-4 font-semibold"></p>
+            <form id="editStatusForm" class="space-y-4">
+                <input type="hidden" id="editStatusTaskId">
+                
+                <div>
+                    <label for="editStatusCurrent" class="block text-sm font-medium text-gray-700">Status de Verificação</label>
+                    <select id="editStatusCurrent" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        <option value="${STATUS_DONE}">Verificado (Concluído)</option>
+                        <option value="${STATUS_MISSED}">Não Enviado</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="editStatusTime" class="block text-sm font-medium text-gray-700">Hora Exata da Verificação/Registro</label>
+                    <input type="time" id="editStatusTime" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                
+                <div>
+                    <label for="editStatusObservation" class="block text-sm font-medium text-gray-700">Comprovação/Motivo</label>
+                    <textarea id="editStatusObservation" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="closeEditStatusModal()" class="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <!-- Modal de Confirmação (customizado) -->
     <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
@@ -365,6 +400,8 @@
         const masterCountDisplay = document.getElementById('masterCount');
         const editTaskModal = document.getElementById('editTaskModal');
         const editTaskForm = document.getElementById('editTaskForm');
+        const editStatusModal = document.getElementById('editStatusModal');
+        const editStatusForm = document.getElementById('editStatusForm');
 
 
         let filterText = ''; // Variável para armazenar o texto de filtro
@@ -722,13 +759,16 @@
         /**
          * Salva o status de conclusão no LocalStorage para a data selecionada.
          */
-        function saveCompletionStatus(taskId, status, deadline, observationText = '') {
+        function saveCompletionStatus(taskId, status, deadline, observationText = '', completionTime = null) {
             const now = new Date(); 
+
+            // Se completionTime for fornecido (do modal de edição), usa ele, senão usa 'agora'
+            let finalCompletionTime = completionTime || now.getTime();
             
             if (status === STATUS_DONE || status === STATUS_MISSED) {
                 completionStatus[taskId] = { 
                     status: status, 
-                    completionTime: now.getTime(), // Salva timestamp
+                    completionTime: finalCompletionTime, // Salva timestamp
                     deadline: deadline,
                     observation: observationText || ''
                 };
@@ -886,10 +926,18 @@
                 const disabledAttr = '';
                 
                 if (isFinalStatus) {
-                    // Exibe o status e a observação registrada
+                    // Exibe o status e a observação registrada + Botão de Editar Registro
                     actionAreaHTML = `
                         <p class="text-xs text-gray-600 italic mt-1 font-medium">Motivo/Comprovação:</p>
-                        <p class="text-sm text-gray-800 break-words max-w-full">${currentObservation || 'Nenhuma registrada.'}</p>
+                        <div class="flex justify-between items-start w-full">
+                            <p class="text-sm text-gray-800 break-words max-w-[80%]">${currentObservation || 'Nenhuma registrada.'}</p>
+                            <button data-task-id="${task.id}" data-task-name="${task.atividade}" onclick="openEditStatusModal('${task.id}')"
+                                    class="text-blue-500 hover:text-blue-700 p-1 rounded-full transition duration-150 edit-status-btn ml-2" title="Editar Registro de Auditoria">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L15.232 5.232z" />
+                                </svg>
+                            </button>
+                        </div>
                     `;
                 } else {
                     // Input de observação para edição (sempre habilitado)
@@ -1454,6 +1502,67 @@
         }
         
         editTaskForm.addEventListener('submit', handleEditTask);
+        
+        // --- NOVO: Funções do Modal de Edição de Status ---
+
+        function openEditStatusModal(taskId) {
+            const taskStatus = completionStatus[taskId];
+            if (!taskStatus || taskStatus.status === STATUS_PENDING) {
+                showModal('Erro', 'O registro não pode ser editado. Marque como Verificado ou Não Enviado primeiro.');
+                return;
+            }
+
+            const task = todayTasksCache.find(t => t.id === taskId);
+            const taskName = task ? task.atividade : 'Tarefa Desconhecida';
+
+            document.getElementById('editStatusTaskId').value = taskId;
+            document.getElementById('editStatusTaskName').textContent = `Tarefa: ${taskName}`;
+            document.getElementById('editStatusCurrent').value = taskStatus.status;
+            document.getElementById('editStatusObservation').value = taskStatus.observation || '';
+            
+            // Converte timestamp para HH:MM para o input type="time"
+            const completionDate = new Date(taskStatus.completionTime);
+            const hours = String(completionDate.getHours()).padStart(2, '0');
+            const minutes = String(completionDate.getMinutes()).padStart(2, '0');
+            document.getElementById('editStatusTime').value = `${hours}:${minutes}`;
+
+            editStatusModal.classList.remove('hidden');
+        }
+
+        function closeEditStatusModal() {
+            editStatusModal.classList.add('hidden');
+            document.getElementById('editStatusForm').reset();
+        }
+
+        function handleEditStatus(e) {
+            e.preventDefault();
+
+            const taskId = document.getElementById('editStatusTaskId').value;
+            const newStatus = document.getElementById('editStatusCurrent').value;
+            const newObservation = document.getElementById('editStatusObservation').value.trim();
+            const newTimeStr = document.getElementById('editStatusTime').value; // HH:MM
+
+            const task = rawChecklistData.find(t => getTaskId(t) === taskId);
+            const deadline = task ? task.horario : '';
+
+            if (newStatus === STATUS_MISSED && !newObservation) {
+                 showModal('Atenção', 'Ao marcar como "Não Enviado", o campo de observação deve ser preenchido com o motivo da falha.');
+                 return;
+            }
+            
+            // Cria um novo timestamp combinando a data selecionada (YYYY-MM-DD) com a nova hora (HH:MM)
+            const dateISO = dateToISO(selectedDate);
+            const newDateTime = new Date(`${dateISO}T${newTimeStr}:00`);
+            const newCompletionTime = newDateTime.getTime();
+
+            // Salva a alteração
+            saveCompletionStatus(taskId, newStatus, deadline, newObservation, newCompletionTime);
+            closeEditStatusModal();
+            showModal('Sucesso', 'Registro de verificação atualizado com sucesso!');
+        }
+
+        editStatusForm.addEventListener('submit', handleEditStatus);
+
 
         // --- Funções do Modal de Adição (Mantidas) ---
 
