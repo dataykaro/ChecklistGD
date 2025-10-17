@@ -159,6 +159,18 @@
                     </div>
                     <p id="noTasksMessage" class="text-gray-500 italic hidden">Nenhuma tarefa diária/semanal agendada para este dia.</p>
                 </div>
+                
+                <!-- NOVO CAMPO: Observações Gerais do Dia -->
+                <div class="bg-white p-6 rounded-xl shadow-lg mt-8">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4">
+                        Observações Gerais do Dia
+                    </h2>
+                    <textarea id="generalObservationInput" rows="4" 
+                              placeholder="Adicione aqui qualquer observação, resumo ou informação importante sobre as verificações desta data." 
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                              oninput="saveGeneralObservation(this.value)"></textarea>
+                    <p class="text-xs text-gray-500 mt-2">Esta observação é salva automaticamente e é exclusiva para a data selecionada acima.</p>
+                </div>
             </div>
 
             <!-- ABA 2: Histórico de Auditoria -->
@@ -413,6 +425,7 @@
 
         const STORAGE_PREFIX = 'dailyChecklistStatus'; // Prefixo para a chave de armazenamento
         const MASTER_DATA_KEY = 'masterChecklistData';
+        const GENERAL_OBS_PREFIX = 'generalObs'; // Prefixo para observações gerais
         
         // Constantes de Status
         const STATUS_PENDING = 'PENDING';
@@ -452,6 +465,7 @@
         const editStatusForm = document.getElementById('editStatusForm');
         const deleteMarkedButton = document.getElementById('deleteMarkedButton');
         const masterSelectAll = document.getElementById('masterSelectAll');
+        const generalObservationInput = document.getElementById('generalObservationInput'); // NOVO
 
 
         let filterText = ''; // Variável para armazenar o texto de filtro
@@ -767,6 +781,13 @@
         function getStorageKey(date) {
             return `${STORAGE_PREFIX}_${dateToISO(date)}`;
         }
+        
+        /**
+         * Retorna a chave para a Observação Geral do Dia.
+         */
+        function getGeneralObsKey(date) {
+            return `${GENERAL_OBS_PREFIX}_${dateToISO(date)}`;
+        }
 
         /**
          * Retorna a chave do dia da semana em Português (ex: 'Seg', 'Ter') para uma data específica.
@@ -796,12 +817,35 @@
         }
         
         /**
+         * Carrega a Observação Geral e a preenche no input.
+         */
+        function loadGeneralObservation() {
+            const key = getGeneralObsKey(selectedDate);
+            const storedObs = localStorage.getItem(key);
+            generalObservationInput.value = storedObs || '';
+        }
+
+        /**
+         * Salva a Observação Geral no LocalStorage.
+         */
+        function saveGeneralObservation(text) {
+            const key = getGeneralObsKey(selectedDate);
+            localStorage.setItem(key, text);
+        }
+        
+        /**
          * Remove o status de conclusão da data selecionada do LocalStorage.
          */
         function clearCompletionStatus() {
-            const key = getStorageKey(selectedDate);
-            localStorage.removeItem(key);
+            const statusKey = getStorageKey(selectedDate);
+            const obsKey = getGeneralObsKey(selectedDate);
+            
+            localStorage.removeItem(statusKey);
+            localStorage.removeItem(obsKey);
+            
             completionStatus = {};
+            generalObservationInput.value = ''; // Limpa o campo de observação
+            
             renderTodayTasks(); 
             loadAndRenderAuditHistory(); // Atualiza o histórico
             showModal('Sucesso', 'Status de verificação da data reiniciado com sucesso!');
@@ -897,6 +941,8 @@
          */
         function renderTodayTasks() {
             loadCompletionStatus(); // Carrega o status para a data atual
+            loadGeneralObservation(); // Carrega a observação geral
+            
             const tasks = getTodayTasks();
             const dayOfWeekKey = getDayKey(selectedDate); // Dia da semana da data selecionada
             
@@ -1221,6 +1267,7 @@
         function exportToCSV() {
             const dateStrISO = dateToISO(selectedDate);
             const dateStrPtBr = selectedDate.toLocaleDateString('pt-BR');
+            const generalObs = localStorage.getItem(getGeneralObsKey(selectedDate)) || 'Nenhuma observação geral registrada.';
             
             let csvContent = `Atividade;Periodicidade;Horário/Prazo de Envio;Responsável;Status Final;Hora da Verificação (Data do Registro: ${dateStrPtBr});Comprovação/Motivo\n`;
 
@@ -1270,6 +1317,10 @@
 
                 csvContent += row + '\n';
             });
+            
+            // Adiciona a observação geral ao final do CSV
+            csvContent += '\nObservação Geral do Dia:\n';
+            csvContent += `"${generalObs.replace(/"/g, '""')}"\n`;
 
             // Uso do BOM correto (\uFEFF)
             const blob = new Blob(["\uFEFF", csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1825,7 +1876,7 @@
                 masterFilterText = '';
                 renderTodayTasks();
             } else if (tabId === 'master') {
-                // Redesenha a lista mestre usando o filtro mestre
+                // Redesenha a lista mestra usando o filtro mestre
                 renderAllTasks();
             }
         }
@@ -1885,9 +1936,12 @@
             editTaskForm.addEventListener('submit', handleEditTask);
             editStatusForm.addEventListener('submit', handleEditStatus);
             addBulkTaskForm.addEventListener('submit', handleBulkAddTask);
-
+            
+            // Listeners de Botões
             exportButton.addEventListener('click', exportToCSV);
             deleteMarkedButton.addEventListener('click', deleteMarkedTasks);
+            addTaskButton.addEventListener('click', openAddTaskModal);
+            addBulkTaskButton.addEventListener('click', openBulkAddTaskModal);
             
             // NOVO: Listener para Marcar Todos na lista mestre
             masterSelectAll.addEventListener('change', toggleAllMasterCheckboxes);
@@ -1907,10 +1961,6 @@
                     switchTab(button.dataset.tab);
                 });
             });
-
-            // Botoes Adicionar/Editar
-            addTaskButton.addEventListener('click', openAddTaskModal);
-            addBulkTaskButton.addEventListener('click', openBulkAddTaskModal);
 
 
             // 4. Inicia a renderização na aba padrão (Verificação Diária)
